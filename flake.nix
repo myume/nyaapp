@@ -17,28 +17,24 @@
     in {
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
-          at-spi2-atk
-          atkmm
-          cairo
-          gdk-pixbuf
-          glib
-          gtk3
-          harfbuzz
-          librsvg
-          libsoup_3
-          pango
-          webkitgtk_4_1
-          openssl
+          nodejs
+          cargo-tauri
         ];
 
         nativeBuildInputs = with pkgs; [
-          pkg-config
-          gobject-introspection
+          # Rust toolchain
+          rustc
           cargo
-          cargo-tauri
-          nodejs
+          pkg-config
+          wrapGAppsHook4
+        ];
+
+        buildInputs = with pkgs; [
+          openssl
+          glib-networking
+
+          webkitgtk_4_1
         ];
       };
     });
 }
-
