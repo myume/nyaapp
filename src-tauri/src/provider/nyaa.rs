@@ -1,4 +1,4 @@
-use super::SourceScraper;
+use super::Provider;
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use futures::StreamExt;
@@ -7,12 +7,12 @@ use std::path::{Path, PathBuf};
 use tokio::{fs::File, io::AsyncWriteExt};
 use url::Url;
 
-pub struct NyaaScraper {
+pub struct Nyaa {
     base_url: Url,
     client: reqwest::Client,
 }
 
-impl NyaaScraper {
+impl Nyaa {
     pub fn new() -> Self {
         Self {
             base_url: Url::parse("https://nyaa.si").unwrap(),
@@ -71,7 +71,7 @@ impl NyaaScraper {
 }
 
 #[async_trait]
-impl SourceScraper for NyaaScraper {
+impl Provider for Nyaa {
     async fn search(&self, key: &str) {
         todo!()
     }

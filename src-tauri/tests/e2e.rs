@@ -1,11 +1,11 @@
-use app_lib::scraper::source::{nyaa::NyaaScraper, SourceScraper};
+use app_lib::provider::{nyaa::Nyaa, Provider};
 use std::{fs::read_dir, io};
 use tempdir::TempDir;
 
 #[tokio::test(flavor = "multi_thread")]
 #[ignore]
 async fn test_e2e_download() {
-    let nyaa = NyaaScraper::new();
+    let nyaa = Nyaa::new();
     let dir = TempDir::new("test").unwrap();
     nyaa.download("1990813", dir.path()).await.unwrap();
 
