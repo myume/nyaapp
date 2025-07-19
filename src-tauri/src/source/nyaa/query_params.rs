@@ -1,6 +1,6 @@
 use super::category::{LiteratureSubCategory, NyaaCategory};
 
-trait QueryParam {
+pub trait QueryParam {
     fn to_query_param(&self) -> String;
 }
 

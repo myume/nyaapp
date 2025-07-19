@@ -1,5 +1,7 @@
+pub mod mangabaka;
+
 pub struct Metadata {}
 
-pub trait MetadataScraper {
-    fn fetch_metdata() -> Metadata;
+pub trait MetadataProvider {
+    fn fetch_metdata(title: &str) -> Metadata;
 }

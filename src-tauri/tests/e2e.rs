@@ -1,4 +1,4 @@
-use app_lib::provider::{nyaa::Nyaa, Provider};
+use app_lib::source::{nyaa::Nyaa, Source};
 use std::{fs::read_dir, io};
 use tempdir::TempDir;
 

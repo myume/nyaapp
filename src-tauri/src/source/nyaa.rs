@@ -1,6 +1,4 @@
-use crate::provider::nyaa::category::NyaaCategory;
-
-use super::Provider;
+use super::Source;
 use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -16,13 +14,13 @@ use std::{
 use tokio::{fs::File, io::AsyncWriteExt};
 use url::Url;
 
-pub mod category;
-pub mod query_params;
-
 pub struct Nyaa {
     base_url: Url,
     client: reqwest::Client,
 }
+
+mod category;
+pub mod query_params;
 
 #[derive(Debug)]
 enum FileSize {
@@ -159,7 +157,7 @@ impl Nyaa {
 
         Ok(NyaaInfo {
             id,
-            category: NyaaCategory::from_query_param(category)?,
+            category: category::NyaaCategory::from_query_param(category)?,
             title,
             size: FileSize::from(&size, &config.size_regex)?,
             timestamp: DateTime::from_timestamp(timestamp, 0).context("Invalid timestamp")?,
@@ -220,7 +218,7 @@ impl Nyaa {
 }
 
 #[async_trait]
-impl Provider for Nyaa {
+impl Source for Nyaa {
     async fn search(&self, query: &str) -> Result<Vec<NyaaInfo>> {
         let mut url = self.base_url.clone();
         url.set_query(Some(query));
