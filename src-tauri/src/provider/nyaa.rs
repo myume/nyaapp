@@ -247,10 +247,6 @@ impl Provider for Nyaa {
             .collect())
     }
 
-    async fn list(&self) {
-        todo!()
-    }
-
     async fn download(&self, id: &str, base_dir: &Path) -> Result<()> {
         let torrent_file = self.download_torrent(id, base_dir).await?;
         self.download_torrent_content(&base_dir, torrent_file)
