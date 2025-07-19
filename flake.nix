@@ -19,6 +19,8 @@
         packages = with pkgs; [
           nodejs
           cargo-tauri
+
+          just
         ];
 
         nativeBuildInputs = with pkgs; [

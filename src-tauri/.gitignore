@@ -2,3 +2,8 @@
 # will have compiled files and executables
 /target/
 /gen/schemas
+
+
+
+# Ignore db dir, user should pull db manually
+/db
