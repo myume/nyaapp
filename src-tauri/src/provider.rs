@@ -6,7 +6,9 @@ pub mod nyaa;
 
 #[async_trait]
 pub trait Provider {
-    async fn search(&self, key: &str);
+    async fn search(&self, query: &str) -> Result<Vec<nyaa::NyaaInfo>>;
+
+    async fn list(&self);
 
     async fn download(&self, id: &str, file_path: &Path) -> Result<()>;
 }

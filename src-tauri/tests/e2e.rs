@@ -19,3 +19,10 @@ async fn test_e2e_download() {
 
     assert_eq!(files.len(), 2);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn test_e2e_search() {
+    let nyaa = Nyaa::new();
+    let results = nyaa.search("c=3_0").await.unwrap();
+    assert_eq!(75, results.len());
+}
