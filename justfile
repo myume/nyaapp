@@ -9,5 +9,6 @@ pull-meta:
     curl {{METADATA_URL}} --output {{DB_DIR}}/series.sqlite.tar.gz
     tar -xzvf {{DB_DIR}}/series.sqlite.tar.gz -C {{DB_DIR}}
     rm -f {{DB_DIR}}/series.sqlite.tar.gz
+    mv {{DB_DIR}}/series.sqlite {{DB_DIR}}/mangabaka.sqlite
 
 

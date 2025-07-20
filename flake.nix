@@ -19,6 +19,7 @@
         packages = with pkgs; [
           nodejs
           cargo-tauri
+          rustfmt
 
           just
         ];
