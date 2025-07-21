@@ -1,5 +1,8 @@
+mod commands;
 pub mod metadata;
 pub mod source;
+pub mod torrent;
+pub mod utils;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {

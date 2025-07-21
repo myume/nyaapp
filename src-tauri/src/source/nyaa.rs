@@ -1,24 +1,18 @@
+use crate::torrent::TorrentService;
+
 use super::Source;
 use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use futures::StreamExt;
-use librqbit::{AddTorrent, Session};
-use log::warn;
 use regex::Regex;
 use scraper::{ElementRef, Html, Selector};
-use std::{
-    path::{Path, PathBuf},
-    str::from_utf8,
-    sync::Arc,
-};
-use tokio::{fs::File, io::AsyncWriteExt};
+use std::{path::Path, str::from_utf8, sync::Arc};
 use url::Url;
 
 pub struct Nyaa {
     base_url: Url,
     client: reqwest::Client,
-    session: Arc<Session>,
+    torrent_service: Arc<dyn TorrentService>,
 }
 
 mod category;
@@ -81,11 +75,11 @@ impl NyaaParseConfig {
 }
 
 impl Nyaa {
-    pub fn new(session: Arc<Session>, client: reqwest::Client) -> Self {
+    pub fn new(torrent_service: Arc<dyn TorrentService>, client: reqwest::Client) -> Self {
         Self {
             base_url: Url::parse("https://nyaa.si").unwrap(),
             client,
-            session,
+            torrent_service,
         }
     }
 
@@ -169,55 +163,6 @@ impl Nyaa {
             completed,
         })
     }
-
-    async fn download_torrent(&self, id: &str, base_dir: &Path) -> Result<PathBuf> {
-        let filename = format!("{}.torrent", id);
-        let output_path = base_dir.join(&filename);
-
-        let path = format!("download/{}", filename);
-        let url = self.base_url.join(&path)?;
-        log::info!(
-            "Downloading torrent file for {} to {}",
-            id,
-            output_path.to_str().unwrap_or("unknown")
-        );
-
-        let request = self.client.get(url.as_str());
-        let response = request.send().await?;
-        match response.error_for_status() {
-            Ok(response) => {
-                let mut torrent_file = File::create(base_dir.join(filename)).await?;
-                let mut stream = response.bytes_stream();
-                while let Some(chunk) = stream.next().await {
-                    torrent_file.write_all(&chunk?).await?;
-                }
-                log::info!(
-                    "Finished downloading torrent file for {} to {}",
-                    id,
-                    base_dir.to_str().unwrap_or("")
-                );
-                Ok(output_path)
-            }
-            Err(err) => {
-                log::error!("Failed to download torrent file from {}", url);
-                Err(anyhow!(err))
-            }
-        }
-    }
-
-    async fn download_torrent_content(&self, torrent: PathBuf) -> Result<()> {
-        let filename = torrent.to_str().unwrap();
-        let handle = self
-            .session
-            .add_torrent(AddTorrent::from_local_filename(filename)?, None)
-            .await?
-            .into_handle()
-            .unwrap();
-
-        handle.wait_until_completed().await?;
-        println!("Download for {} is complete!", filename);
-        Ok(())
-    }
 }
 
 #[async_trait]
@@ -240,7 +185,7 @@ impl Source for Nyaa {
             .filter_map(|row| {
                 Nyaa::parse_row(row, &config)
                     .map_err(|err| {
-                        warn!("{}", err);
+                        log::warn!("{}", err);
                         err
                     })
                     .ok()
@@ -249,9 +194,11 @@ impl Source for Nyaa {
     }
 
     async fn download(&self, id: &str, base_dir: &Path) -> Result<()> {
-        let torrent_file = self.download_torrent(id, base_dir).await?;
-        self.download_torrent_content(torrent_file).await?;
+        let filename = format!("{}.torrent", id);
+        let url = self.base_url.join(&format!("download/{}", filename))?;
 
-        Ok(())
+        self.torrent_service
+            .download_torrent(&url, &filename, base_dir)
+            .await
     }
 }
