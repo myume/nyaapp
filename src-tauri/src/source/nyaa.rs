@@ -81,10 +81,10 @@ impl NyaaParseConfig {
 }
 
 impl Nyaa {
-    pub fn new(session: Arc<Session>) -> Self {
+    pub fn new(session: Arc<Session>, client: reqwest::Client) -> Self {
         Self {
             base_url: Url::parse("https://nyaa.si").unwrap(),
-            client: reqwest::Client::new(),
+            client,
             session,
         }
     }
