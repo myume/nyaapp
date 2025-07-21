@@ -6,7 +6,7 @@ use super::Metadata;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
-use tokio::fs::{remove_file, File};
+use tokio::fs::remove_file;
 use url::Url;
 
 use super::MetadataProvider;
@@ -15,7 +15,7 @@ pub struct Mangabaka {
     pool: SqlitePool,
 }
 
-const MANGABAKA_URL: &str = "https://api.mangabaka.dev/v1/"; // the ending slash is important here
+const MANGABAKA_URL: &str = "https://api.mangabaka.dev/v1/"; // the ending slash is important here, otherwise  it won't join properly
 
 impl Mangabaka {
     pub async fn setup(client: &reqwest::Client, output_dir: &Path) -> Result<Self> {

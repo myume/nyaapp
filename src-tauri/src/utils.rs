@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use anyhow::{Context, Result};
+use anyhow::Result;
 use flate2::read::GzDecoder;
 use futures::StreamExt;
 use tokio::{fs::File, io::AsyncWriteExt};
