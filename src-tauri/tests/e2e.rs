@@ -1,12 +1,15 @@
 use app_lib::source::{nyaa::Nyaa, Source};
+use librqbit::Session;
 use std::{fs::read_dir, io};
 use tempdir::TempDir;
 
 #[tokio::test(flavor = "multi_thread")]
 #[ignore]
 async fn test_e2e_download() {
-    let nyaa = Nyaa::new();
     let dir = TempDir::new("test").unwrap();
+    let session = Session::new(dir.path().to_path_buf()).await.unwrap();
+
+    let nyaa = Nyaa::new(session);
     nyaa.download("1990813", dir.path()).await.unwrap();
 
     let mut files = read_dir(dir.path())
@@ -22,7 +25,9 @@ async fn test_e2e_download() {
 
 #[tokio::test(flavor = "multi_thread")]
 async fn test_e2e_search() {
-    let nyaa = Nyaa::new();
+    let dir = TempDir::new("test").unwrap();
+    let session = Session::new(dir.path().to_path_buf()).await.unwrap();
+    let nyaa = Nyaa::new(session);
     let results = nyaa.search("c=3_0").await.unwrap();
     assert_eq!(75, results.len());
 }

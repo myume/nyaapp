@@ -10,6 +10,7 @@ use scraper::{ElementRef, Html, Selector};
 use std::{
     path::{Path, PathBuf},
     str::from_utf8,
+    sync::Arc,
 };
 use tokio::{fs::File, io::AsyncWriteExt};
 use url::Url;
@@ -17,6 +18,7 @@ use url::Url;
 pub struct Nyaa {
     base_url: Url,
     client: reqwest::Client,
+    session: Arc<Session>,
 }
 
 mod category;
@@ -79,10 +81,11 @@ impl NyaaParseConfig {
 }
 
 impl Nyaa {
-    pub fn new() -> Self {
+    pub fn new(session: Arc<Session>) -> Self {
         Self {
             base_url: Url::parse("https://nyaa.si").unwrap(),
             client: reqwest::Client::new(),
+            session,
         }
     }
 
@@ -202,10 +205,10 @@ impl Nyaa {
         }
     }
 
-    async fn download_torrent_content(&self, base_dir: &Path, torrent: PathBuf) -> Result<()> {
-        let session = Session::new(base_dir.to_path_buf()).await.unwrap();
+    async fn download_torrent_content(&self, torrent: PathBuf) -> Result<()> {
         let filename = torrent.to_str().unwrap();
-        let handle = session
+        let handle = self
+            .session
             .add_torrent(AddTorrent::from_local_filename(filename)?, None)
             .await?
             .into_handle()
@@ -247,8 +250,7 @@ impl Source for Nyaa {
 
     async fn download(&self, id: &str, base_dir: &Path) -> Result<()> {
         let torrent_file = self.download_torrent(id, base_dir).await?;
-        self.download_torrent_content(&base_dir, torrent_file)
-            .await?;
+        self.download_torrent_content(torrent_file).await?;
 
         Ok(())
     }
