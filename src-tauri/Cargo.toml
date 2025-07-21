@@ -37,4 +37,6 @@ regex = "1.11.1"
 strum = "0.27.1"
 strum_macros = "0.27.1"
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
+
+[dev-dependencies]
 mockall = "0.13.1"

@@ -174,7 +174,9 @@ impl Source for Nyaa {
         let request = self.client.get(url.as_str());
         let response = request.send().await?;
         let content = response.bytes().await?;
-        let html = Html::parse_document(from_utf8(&content[..])?);
+        let html = Html::parse_document(
+            from_utf8(&content[..]).context("Failed to parse Nyaa site: invalid utf8 found.")?,
+        );
 
         let selector = Selector::parse("tr").unwrap();
         let rows = html.select(&selector);
