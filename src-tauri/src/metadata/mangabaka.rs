@@ -12,11 +12,44 @@ use url::Url;
 
 use super::MetadataProvider;
 
+const MANGABAKA_URL: &str = "https://api.mangabaka.dev/v1/"; // the ending slash is important here, otherwise  it won't join properly
+
 pub struct Mangabaka {
     pool: SqlitePool,
 }
 
-const MANGABAKA_URL: &str = "https://api.mangabaka.dev/v1/"; // the ending slash is important here, otherwise  it won't join properly
+#[derive(Debug, Clone, sqlx::FromRow)]
+pub struct MangabakaMetadata {
+    pub id: i64,
+    pub title: String,
+    pub cover: String,
+    pub authors: String,
+    pub artists: String,
+    pub description: String,
+    pub year: i64,
+    pub tags: String,
+    pub media_type: String,
+    pub status: String,
+    pub genres: String,
+}
+
+impl MangabakaMetadata {
+    pub fn to_metadata(self) -> Metadata {
+        Metadata {
+            id: self.id,
+            title: self.title,
+            cover: self.cover,
+            authors: serde_json::from_str(&self.authors).expect("authors to be a json array"),
+            artists: serde_json::from_str(&self.artists).expect("artists to be a json array"),
+            description: self.description,
+            year: self.year,
+            tags: serde_json::from_str(&self.tags).expect("tags to be a json array"),
+            media_type: self.media_type,
+            status: self.status,
+            genres: serde_json::from_str(&self.genres).expect("genres to be a json array"),
+        }
+    }
+}
 
 impl Mangabaka {
     pub async fn setup(client: &reqwest::Client, output_dir: &Path) -> Result<Self> {
@@ -85,7 +118,7 @@ impl MetadataProvider for Mangabaka {
         // for some reason all the columns in the provided db is nullable
         // im forcing these columns to be non-null here. if something crashes, it's probably this.
         let rows = query_as!(
-            Metadata,
+            MangabakaMetadata,
             r#"SELECT
                 id as "id!",
                 title as "title!",
@@ -114,7 +147,7 @@ impl MetadataProvider for Mangabaka {
                     sorensen_dice(&row.title.to_string().to_lowercase(), &normalized_title),
                 )
             })
-            .collect::<Vec<(&Metadata, f64)>>();
+            .collect::<Vec<(&MangabakaMetadata, f64)>>();
         results.sort_by(|a, b| b.1.total_cmp(&a.1));
 
         let best_match = results
@@ -125,8 +158,9 @@ impl MetadataProvider for Mangabaka {
                 err
             })?
             .0
-            .clone();
+            .clone()
+            .to_metadata();
 
-        Ok(best_match.clone())
+        Ok(best_match)
     }
 }

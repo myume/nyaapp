@@ -3,19 +3,19 @@ use async_trait::async_trait;
 
 pub mod mangabaka;
 
-#[derive(Debug, Clone, sqlx::FromRow)]
+#[derive(Debug, Clone)]
 pub struct Metadata {
     pub id: i64,
     pub title: String,
     pub cover: String,
-    pub authors: String,
-    pub artists: String,
+    pub authors: Vec<String>,
+    pub artists: Vec<String>,
     pub description: String,
     pub year: i64,
-    pub tags: String,
+    pub tags: Vec<String>,
     pub media_type: String,
     pub status: String,
-    pub genres: String,
+    pub genres: Vec<String>,
 }
 
 #[async_trait]
