@@ -168,6 +168,7 @@ impl Nyaa {
 #[async_trait]
 impl Source for Nyaa {
     async fn search(&self, query: &str) -> Result<Vec<NyaaInfo>> {
+        log::info!("Searching for {}", query);
         let mut url = self.base_url.clone();
         url.set_query(Some(query));
 
@@ -183,6 +184,7 @@ impl Source for Nyaa {
 
         let config = NyaaParseConfig::new();
 
+        log::info!("Parsing Nyaa table rows");
         Ok(rows
             .filter_map(|row| {
                 Nyaa::parse_row(row, &config)
@@ -196,6 +198,8 @@ impl Source for Nyaa {
     }
 
     async fn download(&self, id: &str, base_dir: &Path) -> Result<()> {
+        log::info!("Starting download for {}/view/{}", self.base_url, id);
+
         let filename = format!("{}.torrent", id);
         let url = self.base_url.join(&format!("download/{}", filename))?;
 

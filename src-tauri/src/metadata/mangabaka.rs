@@ -95,6 +95,7 @@ impl Mangabaka {
     }
 
     async fn connect_to_db(db_url: &str) -> Result<SqlitePool> {
+        log::info!("Connecting to mangabaka db");
         SqlitePoolOptions::new()
             .max_connections(5)
             .connect(db_url)

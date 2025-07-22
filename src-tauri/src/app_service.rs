@@ -18,6 +18,7 @@ pub struct AppService {
 
 impl AppService {
     pub async fn new(data_dir: PathBuf) -> Result<Self> {
+        log::info!("Initializing app service");
         let session = Session::new(data_dir.clone()).await.unwrap();
         let client = reqwest::Client::new();
         let torrent_service = Arc::new(RqbitService::new(session, client.clone()));
