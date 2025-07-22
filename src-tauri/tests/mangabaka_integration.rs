@@ -22,7 +22,7 @@ async fn test_db_setup() {
 
 #[tokio::test(flavor = "multi_thread")]
 #[ignore]
-async fn test_search() {
+async fn test_fetch_metadata() {
     dotenv().ok();
     let pool = SqlitePoolOptions::new()
         .max_connections(5)
@@ -30,5 +30,6 @@ async fn test_search() {
         .await
         .unwrap();
     let mangabaka = Mangabaka::new(pool);
-    mangabaka.fetch_metdata("chainsaw man").await.unwrap();
+    let fetched = mangabaka.fetch_metdata("chainsaw man").await.unwrap();
+    assert_eq!(fetched.id, 1677);
 }

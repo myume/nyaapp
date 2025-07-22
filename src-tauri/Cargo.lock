@@ -121,6 +121,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sqlx",
+ "strsim",
  "strum",
  "strum_macros",
  "tar",
