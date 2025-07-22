@@ -74,6 +74,7 @@ impl Mangabaka {
 #[async_trait]
 impl MetadataProvider for Mangabaka {
     async fn fetch_metdata(&self, title: &str) -> Result<Metadata> {
+        log::info!("Fetching metadata for {} from mangabaka db", title);
         let parts = title
             .split(|c: char| c.is_ascii_punctuation())
             .collect::<Vec<&str>>();
@@ -118,7 +119,11 @@ impl MetadataProvider for Mangabaka {
 
         let best_match = results
             .get(0)
-            .context(format!("Failed to find metdata for {}", title))?
+            .context(format!("Failed to find matching metdata for {}", title))
+            .map_err(|err| {
+                log::warn!("No metdata found for {}", title);
+                err
+            })?
             .0
             .clone();
 
