@@ -27,10 +27,10 @@ mock! {
 #[ignore]
 async fn test_e2e_download() {
     let dir = TempDir::new("test").unwrap();
-    let mock_torrent_service = Session::new(dir.path().to_path_buf()).await.unwrap();
+    let session = Session::new(dir.path().to_path_buf()).await.unwrap();
     let client = reqwest::Client::new();
 
-    let rqbit = RqbitService::new(mock_torrent_service, client.clone());
+    let rqbit = RqbitService::new(session, client.clone());
     let nyaa = Nyaa::new(Arc::new(rqbit), client);
 
     nyaa.download("1990813", dir.path()).await.unwrap();

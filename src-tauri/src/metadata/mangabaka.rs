@@ -7,7 +7,7 @@ use anyhow::{Context, Result};
 use async_trait::async_trait;
 use sqlx::{query_as, sqlite::SqlitePoolOptions, SqlitePool};
 use strsim::sorensen_dice;
-use tokio::fs::remove_file;
+use tokio::fs::{create_dir, remove_file};
 use url::Url;
 
 use super::MetadataProvider;
@@ -55,6 +55,9 @@ impl Mangabaka {
     pub async fn setup(client: &reqwest::Client, output_dir: &Path) -> Result<Self> {
         let db_filename = "series.sqlite";
         let db_path = output_dir.join(db_filename);
+        if !output_dir.exists() {
+            create_dir(output_dir).await?;
+        }
         if !db_path.exists() {
             Mangabaka::download_db(client, output_dir).await?;
         }
