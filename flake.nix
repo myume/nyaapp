@@ -20,6 +20,8 @@
           nodejs
           cargo-tauri
           rustfmt
+
+          just
         ];
 
         nativeBuildInputs = with pkgs; [
