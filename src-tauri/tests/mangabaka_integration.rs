@@ -1,9 +1,12 @@
-use std::{fs::read_dir, io, vec};
+use std::{env, fs::read_dir, io, vec};
 
-use app_lib::metadata::mangabaka::Mangabaka;
+use app_lib::metadata::{mangabaka::Mangabaka, MetadataProvider};
+use dotenv::dotenv;
+use sqlx::sqlite::SqlitePoolOptions;
 use tempdir::TempDir;
 
 #[tokio::test(flavor = "multi_thread")]
+#[ignore]
 async fn test_db_setup() {
     let client = reqwest::Client::new();
     let dir = TempDir::new("test").unwrap();
@@ -15,4 +18,17 @@ async fn test_db_setup() {
         .unwrap();
 
     assert_eq!(files, vec!["series.sqlite"]);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+#[ignore]
+async fn test_search() {
+    dotenv().ok();
+    let pool = SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect(&env::var("DATABASE_URL").unwrap())
+        .await
+        .unwrap();
+    let mangabaka = Mangabaka::new(pool);
+    mangabaka.fetch_metdata("chainsaw man").await.unwrap();
 }

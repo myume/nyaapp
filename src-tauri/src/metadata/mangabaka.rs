@@ -5,7 +5,7 @@ use crate::utils::{download_file_from_url, unpack_tarball};
 use super::Metadata;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use sqlx::{sqlite::SqlitePoolOptions, SqlitePool};
+use sqlx::{query, sqlite::SqlitePoolOptions, SqlitePool};
 use tokio::fs::remove_file;
 use url::Url;
 
@@ -72,7 +72,21 @@ impl Mangabaka {
 
 #[async_trait]
 impl MetadataProvider for Mangabaka {
-    async fn fetch_metdata(&self, title: &str) -> Metadata {
+    async fn fetch_metdata(&self, title: &str) -> Result<Metadata> {
+        let pattern = title
+            .split(|c: char| c.is_ascii_punctuation())
+            .collect::<Vec<&str>>()
+            .join("%");
+        let pattern = format!("%{pattern}%");
+
+        let rows = query!(
+            "SELECT title FROM series WHERE LOWER(title) LIKE LOWER($1)",
+            pattern
+        )
+        .fetch_all(&self.pool)
+        .await?;
+
+        println!("{rows:?}");
         todo!()
     }
 }
