@@ -20,8 +20,13 @@ const MANGABAKA_URL: &str = "https://api.mangabaka.dev/v1/"; // the ending slash
 
 impl Mangabaka {
     pub async fn setup(client: &reqwest::Client, output_dir: &Path) -> Result<Self> {
-        Mangabaka::download_db(client, output_dir).await?;
-        let pool = Mangabaka::connect_to_db(output_dir).await?;
+        let db_filename = "series.sqlite";
+        let db_path = output_dir.join(db_filename);
+        if !db_path.exists() {
+            Mangabaka::download_db(client, output_dir).await?;
+        }
+        let db_url = format!("sqlite:{}", db_path.to_str().expect("db path to be valid"));
+        let pool = Mangabaka::connect_to_db(&db_url).await?;
         Ok(Mangabaka::new(pool))
     }
 
@@ -53,15 +58,10 @@ impl Mangabaka {
         Ok(())
     }
 
-    async fn connect_to_db(db_dir: &Path) -> Result<SqlitePool> {
-        let db_url = format!(
-            "sqlite:{}/series.sqlite",
-            db_dir.to_str().context("Invalid DB dir")?
-        );
-
+    async fn connect_to_db(db_url: &str) -> Result<SqlitePool> {
         SqlitePoolOptions::new()
             .max_connections(5)
-            .connect(&db_url)
+            .connect(db_url)
             .await
             .context("Failed to connect to mangabaka db.")
     }
