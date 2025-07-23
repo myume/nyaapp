@@ -19,7 +19,7 @@ mod category;
 pub mod query_params;
 
 #[derive(Debug)]
-enum FileSize {
+pub enum FileSize {
     MiB(f32),
     GiB(f32),
 }
@@ -38,14 +38,14 @@ impl FileSize {
 
 #[derive(Debug)]
 pub struct NyaaInfo {
-    id: String,
-    category: category::NyaaCategory,
-    title: String,
-    size: FileSize,
-    timestamp: DateTime<Utc>,
-    seeders: u32,
-    leechers: u32,
-    completed: u32,
+    pub id: String,
+    pub category: category::NyaaCategory,
+    pub title: String,
+    pub size: FileSize,
+    pub timestamp: DateTime<Utc>,
+    pub seeders: u32,
+    pub leechers: u32,
+    pub completed: u32,
 }
 
 struct NyaaParseConfig {
