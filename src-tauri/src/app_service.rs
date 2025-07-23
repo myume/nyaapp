@@ -13,7 +13,6 @@ pub struct AppService {
     source: Box<dyn Source>,
     base_dir: PathBuf,
     pub torrent_service: Arc<dyn TorrentService>,
-    client: reqwest::Client,
     pub mangabaka_provider: Mangabaka,
 }
 
@@ -35,7 +34,6 @@ impl AppService {
             mangabaka_provider: Mangabaka::setup(&client, &app_data_dir.join("db")).await?,
             base_dir: app_data_dir,
             torrent_service,
-            client,
         })
     }
 
