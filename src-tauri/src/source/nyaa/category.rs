@@ -3,6 +3,8 @@ use std::str::FromStr;
 use anyhow::{anyhow, Context, Ok, Result};
 use strum_macros::EnumString;
 
+use crate::source::Category;
+
 #[derive(Debug)]
 pub enum NyaaCategory {
     // AllCategories,
@@ -45,6 +47,12 @@ impl NyaaCategory {
                     .context(format!("unhandled subcategory: {}", sub))?,
             )),
             _ => Err(anyhow!("unhandled main category: {}", main)),
+        }
+    }
+
+    pub fn to_source_category(&self) -> Category {
+        match self {
+            NyaaCategory::Literature(_) => Category::Manga,
         }
     }
 }

@@ -1,9 +1,12 @@
-use crate::torrent::TorrentService;
+use crate::{
+    source::{nyaa::category::NyaaCategory, SourceInfo},
+    torrent::TorrentService,
+};
 
-use super::Source;
+use super::{FileSize, Source};
 use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
 use regex::Regex;
 use scraper::{ElementRef, Html, Selector};
 use std::{path::Path, str::from_utf8, sync::Arc};
@@ -18,13 +21,7 @@ pub struct Nyaa {
 mod category;
 pub mod query_params;
 
-#[derive(Debug)]
-pub enum FileSize {
-    MiB(f32),
-    GiB(f32),
-}
-
-impl FileSize {
+impl super::FileSize {
     fn from(s: &str, re: &Regex) -> Result<Self> {
         let caps = re.captures(s).context("Failed to parse size")?;
         let size = caps["size"].parse()?;
@@ -34,18 +31,6 @@ impl FileSize {
             unit => Err(anyhow!("Unrecognized file size unit {}", unit)),
         }
     }
-}
-
-#[derive(Debug)]
-pub struct NyaaInfo {
-    pub id: String,
-    pub category: category::NyaaCategory,
-    pub title: String,
-    pub size: FileSize,
-    pub timestamp: DateTime<Utc>,
-    pub seeders: u32,
-    pub leechers: u32,
-    pub completed: u32,
 }
 
 struct NyaaParseConfig {
@@ -109,7 +94,7 @@ impl Nyaa {
             .to_owned())
     }
 
-    fn parse_row(row: ElementRef, config: &NyaaParseConfig) -> Result<NyaaInfo> {
+    fn parse_row(row: ElementRef, config: &NyaaParseConfig) -> Result<SourceInfo> {
         let category = row
             .select(&config.category)
             .next()
@@ -171,9 +156,9 @@ impl Nyaa {
             .collect::<String>()
             .parse()?;
 
-        Ok(NyaaInfo {
+        Ok(SourceInfo {
             id,
-            category: category::NyaaCategory::from_query_param(category)?,
+            category: NyaaCategory::from_query_param(category)?.to_source_category(),
             title,
             size: FileSize::from(&size, &config.size_regex)?,
             timestamp: DateTime::from_timestamp(timestamp, 0).context("Invalid timestamp")?,
@@ -186,7 +171,7 @@ impl Nyaa {
 
 #[async_trait]
 impl Source for Nyaa {
-    async fn search(&self, query: &str) -> Result<Vec<NyaaInfo>> {
+    async fn search(&self, query: &str) -> Result<Vec<SourceInfo>> {
         log::info!("Searching for {}", query);
         let mut url = self.base_url.clone();
         url.set_query(Some(query));
