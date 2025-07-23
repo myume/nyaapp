@@ -77,7 +77,7 @@ impl NyaaParseConfig {
 impl Nyaa {
     pub fn new(torrent_service: Arc<dyn TorrentService>, client: reqwest::Client) -> Self {
         Self {
-            base_url: Url::parse("https://nyaa.si").unwrap(),
+            base_url: Url::parse("https://nyaa.si/").unwrap(),
             client,
             torrent_service,
         }
@@ -88,6 +88,25 @@ impl Nyaa {
             .last()
             .map(|id| id.to_owned())
             .context(format!("Missing id on href: {}", href))
+    }
+
+    async fn get_title_by_id(&self, id: &str) -> Result<String> {
+        let url = self.base_url.join("view/")?.join(id)?;
+        let request = self.client.get(url.as_str());
+        let response = request.send().await?;
+        let content = response.bytes().await?;
+        let html = Html::parse_document(
+            from_utf8(&content[..]).context("Failed to parse Nyaa site: invalid utf8 found.")?,
+        );
+        let title_selector = Selector::parse(".panel-title").expect("title selector to be valid");
+        Ok(html
+            .select(&title_selector)
+            .next()
+            .context(format!("Missing title for id: {}", id))?
+            .text()
+            .collect::<String>()
+            .trim()
+            .to_owned())
     }
 
     fn parse_row(row: ElementRef, config: &NyaaParseConfig) -> Result<NyaaInfo> {
@@ -198,13 +217,18 @@ impl Source for Nyaa {
     }
 
     async fn download(&self, id: &str, base_dir: &Path) -> Result<()> {
-        log::info!("Starting download for {}/view/{}", self.base_url, id);
+        log::info!("Starting download for {}view/{}", self.base_url, id);
 
-        let filename = format!("{}.torrent", id);
-        let url = self.base_url.join(&format!("download/{}", filename))?;
+        let url = self
+            .base_url
+            .join("download/")?
+            .join(&format!("{}.torrent", id))?;
+
+        let title = self.get_title_by_id(id).await?;
+        let output_dir = base_dir.join(&title);
 
         self.torrent_service
-            .download_torrent(&url, &filename, &base_dir.join(id.to_string()))
+            .download_torrent(&url, &format!("{}.torrent", title), &output_dir)
             .await
     }
 }
