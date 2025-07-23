@@ -1,22 +1,24 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use serde::Serialize;
 use std::path::Path;
 
 pub mod nyaa;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
+#[serde(tag = "unit", content = "size")]
 pub enum FileSize {
     MiB(f32),
     GiB(f32),
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub enum Category {
     Manga,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct SourceInfo {
     pub id: String,
     pub category: Category,

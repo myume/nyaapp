@@ -33,7 +33,10 @@ pub fn run() {
             log::info!("Setup complete");
             Ok(())
         })
-        .invoke_handler(tauri::generate_handler![commands::download])
+        .invoke_handler(tauri::generate_handler![
+            commands::download,
+            commands::search
+        ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }

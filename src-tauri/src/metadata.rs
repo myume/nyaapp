@@ -1,9 +1,10 @@
 use anyhow::Result;
 use async_trait::async_trait;
+use serde::Serialize;
 
 pub mod mangabaka;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Metadata {
     pub id: i64,
     pub title: String,
@@ -19,6 +20,6 @@ pub struct Metadata {
 }
 
 #[async_trait]
-pub trait MetadataProvider {
+pub trait MetadataProvider: Send + Sync {
     async fn fetch_metdata(&self, title: &str) -> Result<Metadata>;
 }
