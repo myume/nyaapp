@@ -1,4 +1,5 @@
 use tauri::Manager;
+use tokio::sync::Mutex;
 
 use crate::app_service::AppService;
 
@@ -27,11 +28,12 @@ pub fn run() {
                 let app_dir = app.path().app_data_dir().expect("data dir is missing");
                 AppService::new(app_dir).await
             })
-            .expect("failed to create app service");
-            app.manage(app_service);
-
+            .expect("Failed to create app service");
+            app.manage(Mutex::new(app_service));
+            log::info!("Setup complete");
             Ok(())
         })
+        .invoke_handler(tauri::generate_handler![commands::download])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
