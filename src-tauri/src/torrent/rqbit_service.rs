@@ -1,10 +1,11 @@
 use anyhow::Result;
 use async_trait::async_trait;
-use librqbit::AddTorrent;
+use librqbit::{AddTorrent, AddTorrentOptions};
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
 };
+use tokio::fs::create_dir;
 
 use crate::{torrent::TorrentService, utils::download_file_from_url};
 
@@ -52,16 +53,29 @@ impl TorrentService for RqbitService {
         &self,
         file_url: &url::Url,
         filename: &str,
-        base_dir: &Path,
+        output_dir: &Path,
     ) -> Result<()> {
+        if !output_dir.exists() {
+            create_dir(output_dir).await?;
+        }
+
         let torrent_file_location = self
-            .download_torrent_file(file_url, filename, base_dir)
+            .download_torrent_file(file_url, filename, output_dir)
             .await?;
+
+        let mut options = AddTorrentOptions::default();
+        options.output_folder = Some(
+            output_dir
+                .to_str()
+                .expect("output dir to be valid")
+                .to_owned(),
+        );
+
         let handle = self
             .session
             .add_torrent(
                 AddTorrent::from_local_filename(torrent_file_location.to_str().unwrap())?,
-                None,
+                Some(options),
             )
             .await?
             .into_handle()

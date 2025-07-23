@@ -204,7 +204,7 @@ impl Source for Nyaa {
         let url = self.base_url.join(&format!("download/{}", filename))?;
 
         self.torrent_service
-            .download_torrent(&url, &filename, base_dir)
+            .download_torrent(&url, &filename, &base_dir.join(id.to_string()))
             .await
     }
 }
