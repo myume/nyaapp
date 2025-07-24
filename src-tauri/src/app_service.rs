@@ -63,18 +63,42 @@ impl AppService {
     pub async fn search(&self, query: String) -> Result<Vec<SearchResult>> {
         let source_info = self.source.search(&query).await?;
         let mut results = vec![];
+
+        let mut metadata_hits = 0;
+
         for source in source_info {
             let metadata_provider = self.get_metadata_provider_from_category(&source.category);
             let normalized_title = self.source.normalize_title(&source.title);
             let metadata = metadata_provider
                 .fetch_metdata(&normalized_title)
                 .await
+                .map_err(|err| {
+                    log::warn!(
+                        "No metdata found for \"{}\": {}",
+                        source.title,
+                        err.to_string()
+                    );
+                    err
+                })
                 .ok();
+
+            if metadata.is_some() {
+                metadata_hits += 1;
+            }
+
             results.push(SearchResult {
                 source_info: source,
                 metadata,
             });
         }
+
+        log::info!(
+            "Metadata hit rate: {}/{} = {}%",
+            metadata_hits,
+            results.len(),
+            metadata_hits as f64 / results.len() as f64 * 100.0
+        );
+
         Ok(results)
     }
 }
