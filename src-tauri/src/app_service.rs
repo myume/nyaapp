@@ -93,10 +93,10 @@ impl AppService {
         }
 
         log::info!(
-            "Metadata hit rate: {}/{} = {}%",
+            "Metadata hit rate: {}/{} = {:.2}%",
             metadata_hits,
             results.len(),
-            metadata_hits as f64 / results.len() as f64 * 100.0
+            (metadata_hits as f64 / results.len() as f64 * 100.0)
         );
 
         Ok(results)

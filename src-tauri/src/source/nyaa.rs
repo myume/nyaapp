@@ -174,6 +174,13 @@ impl Nyaa {
 #[async_trait]
 impl Source for Nyaa {
     fn normalize_title(&self, title: &str) -> String {
+        let alternate_titles: Vec<&str> = title.split(['|', '/']).collect();
+        let title = if alternate_titles.len() > 1 {
+            alternate_titles[1]
+        } else {
+            alternate_titles[0]
+        };
+
         let tags = r"\[.+\]|\{.+\}|\(.+\)";
         let chapter_volume = r"[a-zA-Z]*\d+(-[a-zA-Z]*\d+)*";
         let allowlist = r#"[^a-zA-Z0-9 .,?!'"-:]+"#;
