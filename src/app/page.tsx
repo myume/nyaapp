@@ -8,7 +8,6 @@ export default function Home() {
       <button
         onClick={async () => {
           const results = await invoke("search", { query: "c=3_1" });
-          info(JSON.stringify(results));
         }}
       >
         hello

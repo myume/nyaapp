@@ -136,6 +136,12 @@ impl MetadataProvider for Mangabaka {
     async fn fetch_metdata(&self, title: &str) -> Result<Metadata> {
         log::info!("Fetching metadata for \"{}\" from mangabaka db", title);
 
+        // have to do this to allow punctuation in the title.
+        // allowing punctuation in the title to make my life easier because then i don't need to
+        // worry about how to split and handle those chars. It's not that much work but here i
+        // don't even need to worry about it.
+        let fts5_query_string = format!("\"{}\"", title);
+
         // for some reason all the columns in the provided db is nullable
         // im forcing these columns to be non-null here. if something crashes, it's probably this.
         let rows = query_as!(
@@ -154,7 +160,7 @@ impl MetadataProvider for Mangabaka {
                 tags as "tags!"
             FROM series_fts JOIN series ON series_fts.rowid = series.id
             WHERE series_fts MATCH $1 AND merged_with IS NULL"#,
-            title
+            fts5_query_string
         )
         .fetch_all(&self.pool)
         .await?;
@@ -172,11 +178,7 @@ impl MetadataProvider for Mangabaka {
 
         let best_match = results
             .get(0)
-            .context(format!("Failed to find matching metdata for \"{}\"", title))
-            .map_err(|err| {
-                log::warn!("No metdata found for \"{}\"", title);
-                err
-            })?
+            .context(format!("Missing metdata for \"{}\"", title))?
             .0
             .clone()
             .to_metadata();
