@@ -1,8 +1,7 @@
 use std::path::Path;
 
-use crate::utils::{download_file_from_url, unpack_tarball};
-
 use super::Metadata;
+use crate::utils::{download_file_from_url, unpack_tarball};
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use sqlx::{query, query_as, sqlite::SqlitePoolOptions, SqlitePool};
@@ -22,15 +21,15 @@ pub struct Mangabaka {
 pub struct MangabakaMetadata {
     pub id: i64,
     pub title: String,
-    pub cover: String,
-    pub authors: String,
-    pub artists: String,
-    pub description: String,
-    pub year: i64,
-    pub tags: String,
+    pub cover: Option<String>,
+    pub authors: Option<String>,
+    pub artists: Option<String>,
+    pub description: Option<String>,
+    pub year: Option<i64>,
+    pub tags: Option<String>,
     pub media_type: String,
     pub status: String,
-    pub genres: String,
+    pub genres: Option<String>,
 }
 
 impl MangabakaMetadata {
@@ -39,14 +38,26 @@ impl MangabakaMetadata {
             id: self.id,
             title: self.title,
             cover: self.cover,
-            authors: serde_json::from_str(&self.authors).expect("authors to be a json array"),
-            artists: serde_json::from_str(&self.artists).expect("artists to be a json array"),
+            authors: self.authors.map(|authors| {
+                serde_json::from_str(&authors)
+                    .expect(&format!("authors to be a json array - found: {}", authors))
+            }),
+            artists: self.artists.map(|artists| {
+                serde_json::from_str(&artists)
+                    .expect(&format!("artists to be a json array - found: {}", artists))
+            }),
             description: self.description,
             year: self.year,
-            tags: serde_json::from_str(&self.tags).expect("tags to be a json array"),
+            tags: self.tags.map(|tags| {
+                serde_json::from_str(&tags)
+                    .expect(&format!("tags to be a json array - found: {}", tags))
+            }),
             media_type: self.media_type,
             status: self.status,
-            genres: serde_json::from_str(&self.genres).expect("genres to be a json array"),
+            genres: self.genres.map(|genres| {
+                serde_json::from_str(&genres)
+                    .expect(&format!("genres to be a json array - found: {}", genres))
+            }),
         }
     }
 }
@@ -142,23 +153,23 @@ impl MetadataProvider for Mangabaka {
         // don't even need to worry about it.
         let fts5_query_string = format!("\"{}\"", title);
 
-        // for some reason all the columns in the provided db is nullable
-        // im forcing these columns to be non-null here. if something crashes, it's probably this.
+        // to figure out nullability i pretty much just manually checked each column
         let rows = query_as!(
             MangabakaMetadata,
             r#"SELECT
                 series.id as "id!",
                 series.title as "title!",
-                cover_default as "cover!",
-                authors as "authors!",
-                artists as "artists!",
-                description as "description!",
-                genres as "genres!",
+                cover_default as "cover",
+                authors as "authors",
+                artists as "artists",
+                description as "description",
+                genres as "genres",
                 type as "media_type!",
-                year as "year!",
+                year as "year",
                 status as "status!",
-                tags as "tags!"
-            FROM series_fts JOIN series ON series_fts.rowid = series.id
+                tags as "tags"
+            FROM series_fts 
+            JOIN series ON series_fts.rowid = series.id
             WHERE series_fts MATCH $1 AND merged_with IS NULL"#,
             fts5_query_string
         )

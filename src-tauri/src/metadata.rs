@@ -8,15 +8,15 @@ pub mod mangabaka;
 pub struct Metadata {
     pub id: i64,
     pub title: String,
-    pub cover: String,
-    pub authors: Vec<String>,
-    pub artists: Vec<String>,
-    pub description: String,
-    pub year: i64,
-    pub tags: Vec<String>,
+    pub cover: Option<String>,
+    pub authors: Option<Vec<String>>,
+    pub artists: Option<Vec<String>>,
+    pub description: Option<String>,
+    pub year: Option<i64>,
+    pub tags: Option<Vec<String>>,
     pub media_type: String,
     pub status: String,
-    pub genres: Vec<String>,
+    pub genres: Option<Vec<String>>,
 }
 
 #[async_trait]
