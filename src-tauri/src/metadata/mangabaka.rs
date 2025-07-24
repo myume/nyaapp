@@ -172,9 +172,9 @@ impl MetadataProvider for Mangabaka {
 
         let best_match = results
             .get(0)
-            .context(format!("Failed to find matching metdata for {}", title))
+            .context(format!("Failed to find matching metdata for \"{}\"", title))
             .map_err(|err| {
-                log::warn!("No metdata found for {}", title);
+                log::warn!("No metdata found for \"{}\"", title);
                 err
             })?
             .0
