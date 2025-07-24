@@ -20,7 +20,7 @@ pub struct AppService {
 #[derive(Serialize)]
 pub struct SearchResult {
     pub source_info: SourceInfo,
-    pub metadata: Metadata,
+    pub metadata: Option<Metadata>,
 }
 
 impl AppService {
@@ -65,7 +65,11 @@ impl AppService {
         let mut results = vec![];
         for source in source_info {
             let metadata_provider = self.get_metadata_provider_from_category(&source.category);
-            let metadata = metadata_provider.fetch_metdata(&source.title).await?;
+            let normalized_title = self.source.normalize_title(&source.title);
+            let metadata = metadata_provider
+                .fetch_metdata(&normalized_title)
+                .await
+                .ok();
             results.push(SearchResult {
                 source_info: source,
                 metadata,

@@ -81,7 +81,7 @@ impl Nyaa {
         let response = request.send().await?;
         let content = response.bytes().await?;
         let html = Html::parse_document(
-            from_utf8(&content[..]).context("Failed to parse Nyaa site: invalid utf8 found.")?,
+            &from_utf8(&content[..]).context("Failed to parse Nyaa site: invalid utf8 found.")?,
         );
         let title_selector = Selector::parse(".panel-title").expect("title selector to be valid");
         Ok(html
@@ -171,6 +171,25 @@ impl Nyaa {
 
 #[async_trait]
 impl Source for Nyaa {
+    fn normalize_title(&self, title: &str) -> String {
+        let tags = r"\[.+\]|\{.+\}|\(.+\)";
+        let chapter_volume = r"[a-zA-Z]*\d+(-[a-zA-Z]*\d+)*";
+        let allowlist = r"[^a-zA-Z0-9\s]";
+
+        let normalization = Regex::new(&format!(r"({tags})|({chapter_volume})|{allowlist}"))
+            .expect("title normalization regex to be valid");
+
+        let normalized = normalization
+            .replace_all(title, "")
+            .to_lowercase()
+            .trim()
+            .to_owned();
+
+        let multi_space = Regex::new(r"\s+").expect("valid regex for multi space");
+
+        multi_space.replace_all(&normalized, " ").to_string()
+    }
+
     async fn search(&self, query: &str) -> Result<Vec<SourceInfo>> {
         log::info!("Searching for {}", query);
         let mut url = self.base_url.clone();
@@ -215,5 +234,34 @@ impl Source for Nyaa {
         self.torrent_service
             .download_torrent(&url, &format!("{}.torrent", title), &output_dir)
             .await
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+
+    use crate::torrent::rqbit_service::MockRqbitService;
+
+    use super::*;
+
+    #[rstest]
+    #[case(
+        "【OSHI NO KO】 001-166 (2022-2024) (Digital) (Antrill) [Completed]",
+        "oshi no ko"
+    )]
+    #[case(
+        "The Apothecary Diaries: Xiaolan's Story 001-003 (2025) (Digital) (Oak)",
+        "the apothecary diaries xiaolans story"
+    )]
+    #[case("I've Been Killing Slimes for 300 Years and Maxed Out My Level Spin-off - The Red Dragon Academy for Girls v01-02 (2023-2025) (Digital) (1r0n)", "ive been killing slimes for years and maxed out my level spinoff the red dragon academy for girls")]
+    #[case(
+        "My Quiet Blacksmith Life in Another World v05 (2025) (Digital) (Ushi)",
+        "my quiet blacksmith life in another world"
+    )]
+    fn test_normalize_title(#[case] title: &str, #[case] expected: &str) {
+        let nyaa = Nyaa::new(Arc::new(MockRqbitService::new()), reqwest::Client::new());
+        let actual = nyaa.normalize_title(title);
+        assert_eq!(actual, expected);
     }
 }

@@ -32,6 +32,8 @@ pub struct SourceInfo {
 
 #[async_trait]
 pub trait Source: Send + Sync {
+    fn normalize_title(&self, title: &str) -> String;
+
     async fn search(&self, query: &str) -> Result<Vec<SourceInfo>>;
 
     async fn download(&self, id: &str, file_path: &Path) -> Result<()>;

@@ -1,6 +1,10 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use librqbit::{AddTorrent, AddTorrentOptions};
+
+#[cfg(test)]
+use mockall::automock;
+
 use std::{
     path::{Path, PathBuf},
     sync::Arc,
@@ -47,6 +51,7 @@ impl RqbitService {
     }
 }
 
+#[cfg_attr(test, automock)]
 #[async_trait]
 impl TorrentService for RqbitService {
     async fn download_torrent(
