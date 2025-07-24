@@ -180,19 +180,19 @@ impl Source for Nyaa {
         } else {
             alternate_titles[0]
         };
+        let title = title.to_lowercase().replace("’", "'");
 
-        let tags = r"\[.+\]|\{.+\}|\(.+\)";
-        let chapter_volume = r"[a-zA-Z]*\d+(-[a-zA-Z]*\d+)*";
-        let allowlist = r#"[^a-zA-Z0-9 .,?!'"-:]+"#;
+        let heuristics = [
+            r"\[.+\]|\{.+\}|\(.+\)",               // tags and stuff thats bracketed
+            r"[a-zA-Z]*\d+(\s?-\s?[a-zA-Z]*\d+)*", // chapter and volume numbers
+            r#"[^a-zA-Z0-9 .,?!'-:]+"#,            // allowlist of characters
+            r#"\bvolume\.?\b|\bchapter\.?\b|\bch\.?\b|\bvol\.?\b"#, //blocklist of characters
+        ];
 
-        let normalization = Regex::new(&format!(r"({tags})|({chapter_volume})|{allowlist}"))
-            .expect("title normalization regex to be valid");
+        let normalization =
+            Regex::new(&heuristics.join("|")).expect("title normalization regex to be valid");
 
-        let normalized = normalization
-            .replace_all(title, "")
-            .to_lowercase()
-            .trim()
-            .to_owned();
+        let normalized = normalization.replace_all(&title, "").trim().to_owned();
 
         let multi_space = Regex::new(r"\s+").expect("valid regex for multi space");
 
@@ -258,10 +258,15 @@ mod tests {
         "The Apothecary Diaries: Xiaolan's Story 001-003 (2025) (Digital) (Oak)",
         "the apothecary diaries: xiaolan's story"
     )]
-    #[case("I've Been Killing Slimes for 300 Years and Maxed Out My Level Spin-off - The Red Dragon Academy for Girls v01-02 (2023-2025) (Digital) (1r0n)", "i've been killing slimes for years and maxed out my level spin-off - the red dragon academy for girls")]
+    #[case("I've Been Killing Slimes for 300 Years and Maxed Out My Level Spin-off - The Red Dragon Academy for Girls v01-02 (2023-2025) (Digital) (1r0n)",
+        "i've been killing slimes for years and maxed out my level spin-off - the red dragon academy for girls")]
     #[case(
         "My Quiet Blacksmith Life in Another World v05 (2025) (Digital) (Ushi)",
         "my quiet blacksmith life in another world"
+    )]
+    #[case(
+        "I’m the Evil Lord of an Intergalactic Empire! Vol 02 (Audiobook) [Troglodyte]", // stupid apostrophe
+        "i’m the evil lord of an intergalactic empire!"
     )]
     fn test_normalize_title(#[case] title: &str, #[case] expected: &str) {
         let nyaa = Nyaa::new(Arc::new(MockRqbitService::new()), reqwest::Client::new());

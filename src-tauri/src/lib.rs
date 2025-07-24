@@ -20,7 +20,6 @@ pub fn run() {
                         .level(log::LevelFilter::Info)
                         // logging for rqbit is quite verbose so im turning it off here...
                         .level_for("librqbit_dht", log::LevelFilter::Off)
-                        .level_for("tracing", log::LevelFilter::Off)
                         .build(),
                 )?;
             }

@@ -88,7 +88,8 @@ impl Mangabaka {
                 native_title, 
                 romanized_title, 
                 secondary_titles_en, 
-                content='series'
+                content='series',
+                tokenize = "unicode61 separators '0123456789'"
             )
             "#,
             )
