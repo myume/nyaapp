@@ -71,8 +71,8 @@ impl Mangabaka {
         if !has_db {
             query(
                 r#"
-            CREATE VIRTUAL TABLE IF NOT EXISTS series_fts (
-                title INTEGER PRIMARY KEY AUTOINCREMENT,
+            CREATE VIRTUAL TABLE IF NOT EXISTS series_fts USING fts5(
+                title,
                 content='series'
             )
             "#,
