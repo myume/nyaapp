@@ -28,7 +28,7 @@ pub async fn search(
         .await
         .map_err(|e| e.to_string());
     let elapsed = now.elapsed();
-    log::info!("searching took {}ms", elapsed.as_millis());
+    log::info!("Searching took {}ms", elapsed.as_millis());
 
     res
 }

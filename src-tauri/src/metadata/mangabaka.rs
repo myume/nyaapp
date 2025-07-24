@@ -69,6 +69,7 @@ impl Mangabaka {
         let pool = Mangabaka::connect_to_db(&db_url).await?;
 
         if !has_db {
+            log::info!("Initializing FTS5 table");
             query(
                 r#"
             CREATE VIRTUAL TABLE IF NOT EXISTS series_fts USING fts5(
