@@ -9,7 +9,7 @@ use async_trait::async_trait;
 use chrono::DateTime;
 use regex::Regex;
 use scraper::{ElementRef, Html, Selector};
-use std::{path::Path, str::from_utf8, sync::Arc};
+use std::{path::Path, sync::Arc};
 use url::Url;
 
 pub struct Nyaa {
@@ -68,6 +68,13 @@ impl Nyaa {
         }
     }
 
+    async fn fetch_page(&self, url: &Url) -> Result<Html> {
+        let request = self.client.get(url.as_str());
+        let response = request.send().await?;
+        let content = response.text().await?;
+        Ok(Html::parse_document(&content))
+    }
+
     fn extract_id_from_href(href: &str) -> Result<String> {
         href.split("/")
             .last()
@@ -77,12 +84,7 @@ impl Nyaa {
 
     async fn get_title_by_id(&self, id: &str) -> Result<String> {
         let url = self.base_url.join("view/")?.join(id)?;
-        let request = self.client.get(url.as_str());
-        let response = request.send().await?;
-        let content = response.bytes().await?;
-        let html = Html::parse_document(
-            &from_utf8(&content[..]).context("Failed to parse Nyaa site: invalid utf8 found.")?,
-        );
+        let html = self.fetch_page(&url).await?;
         let title_selector = Selector::parse(".panel-title").expect("title selector to be valid");
         Ok(html
             .select(&title_selector)
@@ -195,12 +197,7 @@ impl Source for Nyaa {
         let mut url = self.base_url.clone();
         url.set_query(Some(query));
 
-        let request = self.client.get(url.as_str());
-        let response = request.send().await?;
-        let content = response.bytes().await?;
-        let html = Html::parse_document(
-            from_utf8(&content[..]).context("Failed to parse Nyaa site: invalid utf8 found.")?,
-        );
+        let html = self.fetch_page(&url).await?;
 
         let selector = Selector::parse("tr").unwrap();
         let rows = html.select(&selector);
