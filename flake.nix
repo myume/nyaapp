@@ -22,6 +22,7 @@
           rustfmt
 
           just
+          sqlite
         ];
 
         nativeBuildInputs = with pkgs; [

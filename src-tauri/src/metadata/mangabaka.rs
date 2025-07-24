@@ -5,7 +5,7 @@ use crate::utils::{download_file_from_url, unpack_tarball};
 use super::Metadata;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
-use sqlx::{query_as, sqlite::SqlitePoolOptions, SqlitePool};
+use sqlx::{query, query_as, sqlite::SqlitePoolOptions, SqlitePool};
 use strsim::sorensen_dice;
 use tokio::fs::{create_dir, remove_file};
 use url::Url;
@@ -58,11 +58,33 @@ impl Mangabaka {
         if !output_dir.exists() {
             create_dir(output_dir).await?;
         }
-        if !db_path.exists() {
+
+        let has_db = db_path.exists();
+
+        if !has_db {
             Mangabaka::download_db(client, output_dir).await?;
         }
+
         let db_url = format!("sqlite:{}", db_path.to_str().expect("db path to be valid"));
         let pool = Mangabaka::connect_to_db(&db_url).await?;
+
+        if !has_db {
+            query(
+                r#"
+            CREATE VIRTUAL TABLE IF NOT EXISTS series_fts (
+                title INTEGER PRIMARY KEY AUTOINCREMENT,
+                content='series'
+            )
+            "#,
+            )
+            .execute(&pool)
+            .await?;
+
+            query(r#"INSERT INTO series_fts(series_fts) VALUES('rebuild')"#)
+                .execute(&pool)
+                .await?;
+        }
+
         Ok(Mangabaka::new(pool))
     }
 
@@ -111,21 +133,15 @@ impl Mangabaka {
 #[async_trait]
 impl MetadataProvider for Mangabaka {
     async fn fetch_metdata(&self, title: &str) -> Result<Metadata> {
-        log::info!("Fetching metadata for {} from mangabaka db", title);
-        let parts = title
-            .split(|c: char| c.is_ascii_punctuation())
-            .collect::<Vec<&str>>();
-
-        let pattern = parts.join("%");
-        let pattern = format!("%{pattern}%");
+        log::info!("Fetching metadata for \"{}\" from mangabaka db", title);
 
         // for some reason all the columns in the provided db is nullable
         // im forcing these columns to be non-null here. if something crashes, it's probably this.
         let rows = query_as!(
             MangabakaMetadata,
             r#"SELECT
-                id as "id!",
-                title as "title!",
+                series.id as "id!",
+                series.title as "title!",
                 cover_default as "cover!",
                 authors as "authors!",
                 artists as "artists!",
@@ -135,20 +151,19 @@ impl MetadataProvider for Mangabaka {
                 year as "year!",
                 status as "status!",
                 tags as "tags!"
-            FROM series WHERE LOWER(title) LIKE LOWER($1) AND merged_with IS NULL"#,
-            pattern
+            FROM series_fts JOIN series ON series_fts.rowid = series.id
+            WHERE series_fts MATCH $1 AND merged_with IS NULL"#,
+            title
         )
         .fetch_all(&self.pool)
         .await?;
-
-        let normalized_title = parts.join(" ").to_lowercase();
 
         let mut results = rows
             .iter()
             .map(|row| {
                 (
                     row,
-                    sorensen_dice(&row.title.to_string().to_lowercase(), &normalized_title),
+                    sorensen_dice(&row.title.to_string().to_lowercase(), &title),
                 )
             })
             .collect::<Vec<(&MangabakaMetadata, f64)>>();

@@ -21,5 +21,7 @@ pub struct Metadata {
 
 #[async_trait]
 pub trait MetadataProvider: Send + Sync {
+    /// Fetches associated metadata for the title
+    /// Assumes that title is normalized
     async fn fetch_metdata(&self, title: &str) -> Result<Metadata>;
 }

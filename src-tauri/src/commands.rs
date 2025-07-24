@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use tauri::State;
 use tokio::sync::Mutex;
 
@@ -18,10 +20,15 @@ pub async fn search(
     state: State<'_, Mutex<AppService>>,
     query: String,
 ) -> Result<Vec<SearchResult>, String> {
-    state
+    let now = Instant::now();
+    let res = state
         .lock()
         .await
         .search(query)
         .await
-        .map_err(|e| e.to_string())
+        .map_err(|e| e.to_string());
+    let elapsed = now.elapsed();
+    log::info!("searching took {}ms", elapsed.as_millis());
+
+    res
 }
