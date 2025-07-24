@@ -84,7 +84,10 @@ impl Mangabaka {
             query(
                 r#"
             CREATE VIRTUAL TABLE IF NOT EXISTS series_fts USING fts5(
-                title,
+                title, 
+                native_title, 
+                romanized_title, 
+                secondary_titles_en, 
                 content='series'
             )
             "#,
