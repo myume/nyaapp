@@ -176,7 +176,7 @@ impl Source for Nyaa {
     fn normalize_title(&self, title: &str) -> String {
         let tags = r"\[.+\]|\{.+\}|\(.+\)";
         let chapter_volume = r"[a-zA-Z]*\d+(-[a-zA-Z]*\d+)*";
-        let allowlist = r"[^a-zA-Z0-9\s]";
+        let allowlist = r#"[^a-zA-Z0-9 .,?!'"-:]+"#;
 
         let normalization = Regex::new(&format!(r"({tags})|({chapter_volume})|{allowlist}"))
             .expect("title normalization regex to be valid");
@@ -249,9 +249,9 @@ mod tests {
     )]
     #[case(
         "The Apothecary Diaries: Xiaolan's Story 001-003 (2025) (Digital) (Oak)",
-        "the apothecary diaries xiaolans story"
+        "the apothecary diaries: xiaolan's story"
     )]
-    #[case("I've Been Killing Slimes for 300 Years and Maxed Out My Level Spin-off - The Red Dragon Academy for Girls v01-02 (2023-2025) (Digital) (1r0n)", "ive been killing slimes for years and maxed out my level spinoff the red dragon academy for girls")]
+    #[case("I've Been Killing Slimes for 300 Years and Maxed Out My Level Spin-off - The Red Dragon Academy for Girls v01-02 (2023-2025) (Digital) (1r0n)", "i've been killing slimes for years and maxed out my level spin-off - the red dragon academy for girls")]
     #[case(
         "My Quiet Blacksmith Life in Another World v05 (2025) (Digital) (Ushi)",
         "my quiet blacksmith life in another world"
