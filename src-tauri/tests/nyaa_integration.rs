@@ -35,15 +35,23 @@ async fn test_e2e_download() {
 
     nyaa.download("1990813", dir.path()).await.unwrap();
 
-    let mut files = read_dir(dir.path())
+    let library = read_dir(dir.path())
         .unwrap()
         .map(|res| res.map(|file| file.file_name().to_string_lossy().into_owned()))
         .collect::<Result<Vec<String>, io::Error>>()
         .unwrap();
 
-    files.sort();
+    // library dir should have a new dir for the downloaded series
+    assert_eq!(library.len(), 1);
 
-    assert_eq!(files.len(), 2);
+    let series_dir = library.get(0).unwrap();
+    let downloaded_files = read_dir(dir.path().join(series_dir))
+        .unwrap()
+        .map(|res| res.map(|file| file.file_name().to_string_lossy().into_owned()))
+        .collect::<Result<Vec<String>, io::Error>>()
+        .unwrap();
+
+    assert_eq!(downloaded_files.len(), 2);
 }
 
 #[tokio::test(flavor = "multi_thread")]
