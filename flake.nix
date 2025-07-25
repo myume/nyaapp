@@ -31,6 +31,7 @@
           cargo
           pkg-config
           wrapGAppsHook4
+          wrapGAppsHook3
         ];
 
         buildInputs = with pkgs; [
@@ -39,6 +40,13 @@
 
           webkitgtk_4_1
         ];
+
+        shellHook = ''
+          # https://github.com/tauri-apps/tauri/issues/12361
+          export GDK_BACKEND=x11 # seems like a bug
+
+          export GDK_SCALE=2 # optionally for hidpi monitors
+        '';
       };
     });
 }
