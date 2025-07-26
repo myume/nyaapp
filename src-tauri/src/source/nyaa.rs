@@ -217,13 +217,14 @@ impl Source for Nyaa {
             r"\[.+\]|\{.+\}|\(.+\)",               // tags and stuff thats bracketed
             r"[a-zA-Z]*\d+(\s?-\s?[a-zA-Z]*\d+)*", // chapter and volume numbers
             r#"[^a-zA-Z0-9 .,?!'-:]+"#,            // allowlist of characters
-            r#"\bvolume\.?\b|\bchapter\.?\b|\bch\.?\b|\bvol\.?\b"#, //blocklist of characters
+            r#"\bvolume[.s]?\b|\bchapter[.s]?\b|\bch\.?\b|\bvol\.?\b"#, //blocklist of characters
         ];
 
         let normalization =
             Regex::new(&heuristics.join("|")).expect("title normalization regex to be valid");
 
         let normalized = normalization.replace_all(&title, "").trim().to_owned();
+        let normalized = normalized.strip_suffix("as").unwrap_or(&normalized);
 
         let multi_space = Regex::new(r"\s+").expect("valid regex for multi space");
 
