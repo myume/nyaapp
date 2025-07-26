@@ -36,8 +36,9 @@ export const SourceCard = ({
             className="flex-1 mb-2 w-full"
             src={metadata?.cover}
             alt="Cover"
-            width={400}
-            height={400}
+            width={300}
+            height={300}
+            objectFit="contain"
           />
         ) : (
           <Book className="flex-1 w-full" size={260} />
