@@ -46,6 +46,7 @@
           export GDK_BACKEND=x11 # seems like a bug
 
           export GDK_SCALE=2 # optionally for hidpi monitors
+          export GIO_MODULE_DIR="${pkgs.glib-networking}/lib/gio/modules/"
         '';
       };
     });

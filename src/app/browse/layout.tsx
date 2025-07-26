@@ -8,7 +8,7 @@ export default function Layout({
   return (
     <>
       <PageHeader title={"Browse"} />
-      {children}
+      <div className="p-2">{children}</div>
     </>
   );
 }
