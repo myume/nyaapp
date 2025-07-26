@@ -27,7 +27,7 @@ export const SourceCard = ({
 }) => {
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="h-4">
         <CardDescription>{category}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col h-full">
