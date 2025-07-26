@@ -55,8 +55,8 @@ export default function Browse() {
         pages.push("...");
       }
 
-      let start = Math.max(min_page + 1, page - 1);
-      let end = Math.min(max_page - 1, page + 1);
+      let start = Math.max(min_page + 1, page - 2);
+      let end = Math.min(max_page - 1, page + 2);
 
       if (page <= min_page + 2) {
         start = min_page + 1;
