@@ -33,7 +33,7 @@ export const SourceCard = ({
       <CardContent className="flex flex-col h-full">
         {metadata && metadata.cover ? (
           <Image
-            className="flex-1 mb-2 w-full"
+            className="flex-1 w-full"
             src={metadata?.cover}
             alt="Cover"
             width={300}
@@ -41,9 +41,9 @@ export const SourceCard = ({
             objectFit="contain"
           />
         ) : (
-          <Book className="flex-1 w-full" size={260} />
+          <Book className="flex-1 w-full h-full" size={260} />
         )}
-        <CardTitle className="mb-2">{title}</CardTitle>
+        <CardTitle className="mt-4 mb-2">{title}</CardTitle>
         <CardDescription className="flex gap-1">
           <div className="flex items-center">
             {seeders} <ArrowUp size={16} />
