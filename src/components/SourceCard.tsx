@@ -35,10 +35,10 @@ export const SourceCard = ({
           <Image
             className="flex-1 w-full"
             src={metadata?.cover}
-            alt="Cover"
-            width={300}
-            height={300}
-            objectFit="contain"
+            alt={`${metadata.title} Cover`}
+            width={64}
+            height={64}
+            style={{ objectFit: "contain" }}
           />
         ) : (
           <Book className="flex-1 w-full h-full" size={260} />
