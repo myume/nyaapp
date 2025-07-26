@@ -6,7 +6,7 @@ use tokio::fs::create_dir;
 
 use crate::{
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
-    source::{nyaa::Nyaa, Category, Source, SourceInfo},
+    source::{nyaa::Nyaa, Category, PaginationInfo, Source, SourceMedia},
     torrent::{rqbit_service::RqbitService, TorrentService},
 };
 
@@ -19,8 +19,14 @@ pub struct AppService {
 
 #[derive(Serialize)]
 pub struct SearchResult {
-    pub source_info: SourceInfo,
-    pub metadata: Option<Metadata>,
+    source_media: SourceMedia,
+    metadata: Option<Metadata>,
+}
+
+#[derive(Serialize)]
+pub struct SearchResponse {
+    search_results: Vec<SearchResult>,
+    pagination: PaginationInfo,
 }
 
 impl AppService {
@@ -60,22 +66,22 @@ impl AppService {
         }
     }
 
-    pub async fn search(&self, query: String) -> Result<Vec<SearchResult>> {
-        let source_info = self.source.search(&query).await?;
+    pub async fn search(&self, query: String) -> Result<SearchResponse> {
+        let (source_media, pagination) = self.source.search(&query).await?;
         let mut results = vec![];
 
         let mut metadata_hits = 0;
 
-        for source in source_info {
-            let metadata_provider = self.get_metadata_provider_from_category(&source.category);
-            let normalized_title = self.source.normalize_title(&source.title);
+        for media in source_media {
+            let metadata_provider = self.get_metadata_provider_from_category(&media.category);
+            let normalized_title = self.source.normalize_title(&media.title);
             let metadata = metadata_provider
                 .fetch_metdata(&normalized_title)
                 .await
                 .map_err(|err| {
                     log::warn!(
                         "No metdata found for \"{}\": {}",
-                        source.title,
+                        media.title,
                         err.to_string()
                     );
                     err
@@ -87,7 +93,7 @@ impl AppService {
             }
 
             results.push(SearchResult {
-                source_info: source,
+                source_media: media,
                 metadata,
             });
         }
@@ -99,6 +105,9 @@ impl AppService {
             (metadata_hits as f64 / results.len() as f64 * 100.0)
         );
 
-        Ok(results)
+        Ok(SearchResponse {
+            search_results: results,
+            pagination,
+        })
     }
 }

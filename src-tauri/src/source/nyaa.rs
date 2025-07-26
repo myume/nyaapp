@@ -1,5 +1,5 @@
 use crate::{
-    source::{nyaa::category::NyaaCategory, SourceInfo},
+    source::{nyaa::category::NyaaCategory, PaginationInfo, SourceMedia},
     torrent::TorrentService,
 };
 
@@ -8,7 +8,7 @@ use anyhow::{anyhow, Context, Result};
 use async_trait::async_trait;
 use chrono::DateTime;
 use regex::Regex;
-use scraper::{ElementRef, Html, Selector};
+use scraper::{CaseSensitivity, ElementRef, Html, Selector};
 use std::{path::Path, sync::Arc};
 use url::Url;
 
@@ -96,7 +96,7 @@ impl Nyaa {
             .to_owned())
     }
 
-    fn parse_row(row: ElementRef, config: &NyaaParseConfig) -> Result<SourceInfo> {
+    fn parse_row(row: ElementRef, config: &NyaaParseConfig) -> Result<SourceMedia> {
         let category = row
             .select(&config.category)
             .next()
@@ -158,7 +158,7 @@ impl Nyaa {
             .collect::<String>()
             .parse()?;
 
-        Ok(SourceInfo {
+        Ok(SourceMedia {
             id,
             category: NyaaCategory::from_query_param(category)?.to_source_category(),
             title,
@@ -167,6 +167,37 @@ impl Nyaa {
             seeders,
             leechers,
             completed,
+        })
+    }
+
+    fn get_pagination_info(html: &Html) -> Result<PaginationInfo> {
+        let pagination_selector = Selector::parse(".pagination li").unwrap();
+        let pagination = html.select(&pagination_selector);
+
+        let page_numbers: Vec<u32> = pagination
+            .map(|page| page.text().filter_map(|c| c.trim().parse::<u32>().ok()))
+            .flatten()
+            .collect();
+
+        let has_prev = !html
+            .select(&Selector::parse(".pagination li:first-child").unwrap())
+            .next()
+            .expect("There to be a prev button")
+            .value()
+            .has_class("disabled", CaseSensitivity::AsciiCaseInsensitive);
+
+        let has_next = !html
+            .select(&Selector::parse(".pagination li:last-child").unwrap())
+            .next()
+            .expect("There to be a next button")
+            .value()
+            .has_class("disabled", CaseSensitivity::AsciiCaseInsensitive);
+
+        Ok(PaginationInfo {
+            min_page: page_numbers.iter().min().unwrap().to_owned(),
+            max_page: page_numbers.iter().max().unwrap().to_owned(),
+            has_prev,
+            has_next,
         })
     }
 }
@@ -199,7 +230,7 @@ impl Source for Nyaa {
         multi_space.replace_all(&normalized, " ").to_string()
     }
 
-    async fn search(&self, query: &str) -> Result<Vec<SourceInfo>> {
+    async fn search(&self, query: &str) -> Result<(Vec<SourceMedia>, PaginationInfo)> {
         log::info!("Searching for {}", query);
         let mut url = self.base_url.clone();
         url.set_query(Some(query));
@@ -212,7 +243,8 @@ impl Source for Nyaa {
         let config = NyaaParseConfig::new();
 
         log::info!("Parsing Nyaa table rows");
-        Ok(rows
+
+        let media_info = rows
             .filter_map(|row| {
                 Nyaa::parse_row(row, &config)
                     .map_err(|err| {
@@ -221,7 +253,9 @@ impl Source for Nyaa {
                     })
                     .ok()
             })
-            .collect())
+            .collect();
+
+        Ok((media_info, Nyaa::get_pagination_info(&html)?))
     }
 
     async fn download(&self, id: &str, base_dir: &Path) -> Result<()> {

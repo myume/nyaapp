@@ -5,7 +5,7 @@ export type FileSize = {
   size: number;
 };
 
-export type SourceInfo = {
+export type SourceMedia = {
   id: string;
   category: Category;
   title: string;

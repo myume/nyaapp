@@ -1,4 +1,5 @@
 use anyhow::Result;
+use app_lib::source::PaginationInfo;
 use app_lib::source::{nyaa::Nyaa, Source};
 use app_lib::torrent::rqbit_service::RqbitService;
 use app_lib::torrent::TorrentService;
@@ -61,6 +62,15 @@ async fn test_e2e_search() {
     let rqbit = MockTorrentService::new();
 
     let nyaa = Nyaa::new(Arc::new(rqbit), client);
-    let results = nyaa.search("c=3_0").await.unwrap();
+    let (results, pagination) = nyaa.search("c=3_0").await.unwrap();
     assert_eq!(75, results.len());
+    assert_eq!(
+        pagination,
+        PaginationInfo {
+            min_page: 1,
+            max_page: 6,
+            has_prev: false,
+            has_next: true,
+        }
+    )
 }

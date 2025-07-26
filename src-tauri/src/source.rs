@@ -19,7 +19,7 @@ pub enum Category {
 }
 
 #[derive(Debug, Serialize)]
-pub struct SourceInfo {
+pub struct SourceMedia {
     pub id: String,
     pub category: Category,
     pub title: String,
@@ -30,11 +30,19 @@ pub struct SourceInfo {
     pub completed: u32,
 }
 
+#[derive(Debug, Serialize, PartialEq)]
+pub struct PaginationInfo {
+    pub min_page: u32,
+    pub max_page: u32,
+    pub has_prev: bool,
+    pub has_next: bool,
+}
+
 #[async_trait]
 pub trait Source: Send + Sync {
     fn normalize_title(&self, title: &str) -> String;
 
-    async fn search(&self, query: &str) -> Result<Vec<SourceInfo>>;
+    async fn search(&self, query: &str) -> Result<(Vec<SourceMedia>, PaginationInfo)>;
 
     async fn download(&self, id: &str, file_path: &Path) -> Result<()>;
 }

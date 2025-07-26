@@ -11,7 +11,7 @@ import { ArrowDown, ArrowUp, Book, Check } from "lucide-react";
 
 export const SourceCard = ({
   searchResult: {
-    source_info: {
+    source_media: {
       title,
       size: { unit, size },
       seeders,

@@ -3,7 +3,7 @@ use std::time::Instant;
 use tauri::State;
 use tokio::sync::Mutex;
 
-use crate::app_service::{AppService, SearchResult};
+use crate::app_service::{AppService, SearchResponse};
 
 #[tauri::command]
 pub async fn download(state: State<'_, Mutex<AppService>>, id: String) -> Result<(), String> {
@@ -19,7 +19,7 @@ pub async fn download(state: State<'_, Mutex<AppService>>, id: String) -> Result
 pub async fn search(
     state: State<'_, Mutex<AppService>>,
     query: String,
-) -> Result<Vec<SearchResult>, String> {
+) -> Result<SearchResponse, String> {
     let now = Instant::now();
     let res = state
         .lock()
