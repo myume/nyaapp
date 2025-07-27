@@ -1,17 +1,22 @@
 import { SearchResult } from "@/types/SearchResult";
 import {
   Card,
+  CardAction,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "./ui/card";
 import Image from "next/image";
-import { ArrowDown, ArrowUp, Book, Check } from "lucide-react";
+import { ArrowDown, ArrowUp, Book, Check, Download } from "lucide-react";
+import { Button } from "./ui/button";
+import { invoke } from "@tauri-apps/api/core";
 
 export const SourceCard = ({
   searchResult: {
     source_media: {
+      id,
       title,
       size: { unit, size },
       seeders,
@@ -62,6 +67,19 @@ export const SourceCard = ({
           {new Date(timestamp).toLocaleString()}
         </CardDescription>
       </CardContent>
+      <CardFooter>
+        <CardAction>
+          <Button
+            variant="secondary"
+            onClick={() => {
+              invoke("download", { id });
+            }}
+          >
+            <Download />
+            Download
+          </Button>
+        </CardAction>
+      </CardFooter>
     </Card>
   );
 };
