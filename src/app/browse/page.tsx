@@ -101,14 +101,12 @@ export default function Browse() {
   return (
     <div className="w-full h-full">
       <div className="sticky top-0 flex justify-between items-center mb-3 gap-5 bg-background transition-all duration-200">
-        <button
-          className="cursor-pointer"
+        <PageHeader
+          title={"Browse"}
           onClick={() => {
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-        >
-          <PageHeader title={"Browse"} />
-        </button>
+        />
         <SourceSearch
           setQueryAction={(q) => {
             setQuery(q);
