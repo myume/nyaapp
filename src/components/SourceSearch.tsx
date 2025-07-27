@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "./ui/select";
 import { optionsToQueryMap } from "@/lib/sourceOptionsToQuery";
+import { Button } from "./ui/button";
+import { Search } from "lucide-react";
 
 type SourceOption = {
   name: string;
@@ -105,6 +107,9 @@ export const SourceSearch = ({
         </Select>
       ))}
       <Input name="query" placeholder="Search..." />
+      <Button variant="outline" size="icon" type="submit">
+        <Search />
+      </Button>
     </form>
   );
 };
