@@ -100,7 +100,7 @@ export default function Browse() {
 
   return (
     <div className="w-full h-full">
-      <div className="flex justify-between mb-4">
+      <div className="sticky top-0 flex justify-between items-center mb-3 gap-5 bg-background transition-all duration-200">
         <PageHeader title={"Browse"} />
         <SourceSearch
           setQueryAction={(q) => {
@@ -120,7 +120,7 @@ export default function Browse() {
               <SourceCard key={result.source_media.id} searchResult={result} />
             ))}
           </div>
-          <Pagination className="mt-5">
+          <Pagination className="mt-5 mb-4">
             <PaginationContent>
               {paginationInfo?.has_prev && (
                 <PaginationItem>
