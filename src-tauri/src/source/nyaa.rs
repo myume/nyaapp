@@ -179,23 +179,29 @@ impl Nyaa {
             .flatten()
             .collect();
 
-        let has_prev = !html
+        let has_prev = html
             .select(&Selector::parse(".pagination li:first-child").unwrap())
             .next()
-            .expect("There to be a prev button")
-            .value()
-            .has_class("disabled", CaseSensitivity::AsciiCaseInsensitive);
+            .map(|prev| {
+                !prev
+                    .value()
+                    .has_class("disabled", CaseSensitivity::AsciiCaseInsensitive)
+            })
+            .unwrap_or(false);
 
-        let has_next = !html
+        let has_next = html
             .select(&Selector::parse(".pagination li:last-child").unwrap())
             .next()
-            .expect("There to be a next button")
-            .value()
-            .has_class("disabled", CaseSensitivity::AsciiCaseInsensitive);
+            .map(|next| {
+                !next
+                    .value()
+                    .has_class("disabled", CaseSensitivity::AsciiCaseInsensitive)
+            })
+            .unwrap_or(false);
 
         Ok(PaginationInfo {
-            min_page: page_numbers.iter().min().unwrap().to_owned(),
-            max_page: page_numbers.iter().max().unwrap().to_owned(),
+            min_page: page_numbers.iter().min().unwrap_or(&1).to_owned(),
+            max_page: page_numbers.iter().max().unwrap_or(&1).to_owned(),
             has_prev,
             has_next,
         })

@@ -71,7 +71,6 @@ export const SourceSearch = ({
         >;
 
         const converter = optionsToQueryMap[source];
-        console.log(data);
         const queryString = converter(data);
         setQueryAction(queryString);
       }}
