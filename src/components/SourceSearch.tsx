@@ -78,7 +78,7 @@ export const SourceSearch = ({
       }}
     >
       <Select name="source" value={source} onValueChange={setSource}>
-        <SelectTrigger>
+        <SelectTrigger className="cursor-pointer">
           <SelectValue placeholder="Source" />
         </SelectTrigger>
         <SelectContent>
@@ -91,14 +91,18 @@ export const SourceSearch = ({
 
       {sourceOptions.map(({ name, options, defaultValue }) => (
         <Select name={name} key={name} defaultValue={defaultValue}>
-          <SelectTrigger>
+          <SelectTrigger className="cursor-pointer">
             <SelectValue placeholder={name} />
           </SelectTrigger>
           <SelectContent>
             <SelectGroup>
               <SelectLabel>{name}</SelectLabel>
               {options.map(({ name, value }) => (
-                <SelectItem key={value} value={value}>
+                <SelectItem
+                  className="cursor-pointer"
+                  key={value}
+                  value={value}
+                >
                   {name}
                 </SelectItem>
               ))}
@@ -107,7 +111,12 @@ export const SourceSearch = ({
         </Select>
       ))}
       <Input name="query" placeholder="Search..." />
-      <Button variant="outline" size="icon" type="submit">
+      <Button
+        className="cursor-pointer"
+        variant="outline"
+        size="icon"
+        type="submit"
+      >
         <Search />
       </Button>
     </form>
