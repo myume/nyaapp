@@ -1,14 +1,7 @@
-import { PageHeader } from "@/components/PageHeader";
-
 export default function Layout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <>
-      <PageHeader title={"Browse"} />
-      <div>{children}</div>
-    </>
-  );
+  return <>{children}</>;
 }

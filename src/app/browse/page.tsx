@@ -1,6 +1,8 @@
 "use client";
 
+import { PageHeader } from "@/components/PageHeader";
 import { SourceCard } from "@/components/SourceCard";
+import { SourceSearch } from "@/components/SourceSearch";
 import {
   Pagination,
   PaginationContent,
@@ -21,6 +23,7 @@ export default function Browse() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [paginationInfo, setPaginationInfo] = useState<PaginationInfo>();
+  const [query, setQuery] = useState("c=3_1");
 
   const search = async (query: string) => {
     setLoading(true);
@@ -34,8 +37,8 @@ export default function Browse() {
   };
 
   useEffect(() => {
-    search(`c=3_1&p=${page}`);
-  }, [page]);
+    search(`${query}&p=${page}`);
+  }, [page, query]);
 
   // shoutout gemini for generating this.
   const renderPagination = () => {
@@ -95,42 +98,51 @@ export default function Browse() {
     ));
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center w-full h-[90vh]">
-        <Spinner size="large" />
-      </div>
-    );
-  }
-
   return (
     <div className="w-full h-full">
-      <div className="p-5 grid md:grid-cols-3 lg:grid-cols-5 gap-5">
-        {searchResults.map((result) => (
-          <SourceCard key={result.source_media.id} searchResult={result} />
-        ))}
+      <div className="flex justify-between mb-4">
+        <PageHeader title={"Browse"} />
+        <SourceSearch
+          setQueryAction={(q) => {
+            setQuery(q);
+            setPage(1);
+          }}
+        />
       </div>
-      <Pagination>
-        <PaginationContent>
-          {paginationInfo?.has_prev && (
-            <PaginationItem>
-              <PaginationPrevious
-                className="cursor-pointer"
-                onClick={() => setPage((page) => Math.max(page - 1, 1))}
-              />
-            </PaginationItem>
-          )}
-          {renderPagination()}
-          {paginationInfo?.has_next && (
-            <PaginationItem>
-              <PaginationNext
-                className="cursor-pointer"
-                onClick={() => setPage((page) => page + 1)}
-              />
-            </PaginationItem>
-          )}
-        </PaginationContent>
-      </Pagination>
+      {loading ? (
+        <div className="flex items-center justify-center w-full h-[90vh]">
+          <Spinner size="large" />
+        </div>
+      ) : (
+        <div>
+          <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-5">
+            {searchResults.map((result) => (
+              <SourceCard key={result.source_media.id} searchResult={result} />
+            ))}
+          </div>
+          <Pagination className="mt-5">
+            <PaginationContent>
+              {paginationInfo?.has_prev && (
+                <PaginationItem>
+                  <PaginationPrevious
+                    className="cursor-pointer"
+                    onClick={() => setPage((page) => Math.max(page - 1, 1))}
+                  />
+                </PaginationItem>
+              )}
+              {renderPagination()}
+              {paginationInfo?.has_next && (
+                <PaginationItem>
+                  <PaginationNext
+                    className="cursor-pointer"
+                    onClick={() => setPage((page) => page + 1)}
+                  />
+                </PaginationItem>
+              )}
+            </PaginationContent>
+          </Pagination>
+        </div>
+      )}
     </div>
   );
 }
