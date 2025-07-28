@@ -127,6 +127,7 @@ impl TorrentService for RqbitService {
                     tx.send(Self::to_stats(id.to_owned(), stats))?;
                     tokio::time::sleep(Duration::from_secs(1)).await;
                 }
+                tx.send(Self::to_stats(id.to_owned(), h.stats()))?;
                 info!("{}", h.stats());
                 Ok(())
             }
@@ -147,6 +148,7 @@ impl TorrentService for RqbitService {
         log::info!("Download for {} is complete!", id);
 
         self.handles.remove(id);
+        self.receivers.remove(id);
 
         Ok(())
     }
