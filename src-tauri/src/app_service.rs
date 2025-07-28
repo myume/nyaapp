@@ -1,19 +1,22 @@
-use anyhow::Result;
+use anyhow::{Context, Result};
 use librqbit::Session;
 use serde::Serialize;
 use std::{path::PathBuf, sync::Arc, vec};
-use tokio::fs::create_dir;
+use tokio::{
+    fs::create_dir,
+    sync::{watch::Receiver, Mutex},
+};
 
 use crate::{
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
     source::{nyaa::Nyaa, Category, PaginationInfo, Source, SourceMedia},
-    torrent::{rqbit_service::RqbitService, TorrentService},
+    torrent::{rqbit_service::RqbitService, TorrentService, TorrentStats},
 };
 
 pub struct AppService {
     source: Box<dyn Source>,
     base_dir: PathBuf,
-    pub torrent_service: Arc<dyn TorrentService>,
+    pub torrent_service: Arc<Mutex<dyn TorrentService>>,
     pub mangabaka_provider: Arc<Mangabaka>,
 }
 
@@ -40,7 +43,7 @@ impl AppService {
 
         let session = Session::new(library_dir).await.unwrap();
         let client = reqwest::Client::new();
-        let torrent_service = Arc::new(RqbitService::new(session, client.clone()));
+        let torrent_service = Arc::new(Mutex::new(RqbitService::new(session, client.clone())));
 
         Ok(AppService {
             source: Box::new(Nyaa::new(torrent_service.clone(), client.clone())),
@@ -52,9 +55,17 @@ impl AppService {
         })
     }
 
-    pub async fn download(&self, id: String) -> Result<()> {
+    pub async fn get_torrent_stats_receiver(&self, id: &str) -> Result<Receiver<TorrentStats>> {
+        self.torrent_service
+            .lock()
+            .await
+            .get_stats_receiver(id)
+            .context("Receiver does not exist")
+    }
+
+    pub async fn download(&self, id: &str) -> Result<()> {
         let library_dir = self.base_dir.join("library");
-        self.source.download(&id, &library_dir).await
+        self.source.download(id, &library_dir).await
     }
 
     fn get_metadata_provider_from_category(

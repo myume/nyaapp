@@ -12,6 +12,7 @@ import Image from "next/image";
 import { ArrowDown, ArrowUp, Book, Check, Download } from "lucide-react";
 import { Button } from "./ui/button";
 import { invoke } from "@tauri-apps/api/core";
+import { useDownloads } from "./providers/DownloadsProvider";
 
 export const SourceCard = ({
   searchResult: {
@@ -30,6 +31,9 @@ export const SourceCard = ({
 }: {
   searchResult: SearchResult;
 }) => {
+  const { downloads } = useDownloads();
+  const downloadInfo = downloads[id];
+
   return (
     <Card>
       <CardHeader className="h-4">
@@ -70,13 +74,19 @@ export const SourceCard = ({
       <CardFooter>
         <CardAction>
           <Button
+            disabled={downloadInfo !== undefined}
+            className="cursor-pointer disabled:cursor-not-allowed"
             variant="secondary"
             onClick={() => {
               invoke("download", { id });
             }}
           >
             <Download />
-            Download
+            {downloadInfo?.finished
+              ? "Downloaded"
+              : downloadInfo
+                ? `Downloading ${Math.round((downloadInfo.progress_bytes / Math.max(downloadInfo.total_bytes, 1)) * 100)}%`
+                : "Download"}
           </Button>
         </CardAction>
       </CardFooter>

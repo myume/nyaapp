@@ -8,6 +8,7 @@ use librqbit::Session;
 use std::sync::Arc;
 use std::{fs::read_dir, io};
 use tempdir::TempDir;
+use tokio::sync::Mutex;
 
 use mockall::mock;
 
@@ -15,12 +16,17 @@ mock! {
     pub TorrentService {}
     #[async_trait]
     impl TorrentService for TorrentService {
-        async fn download_torrent(
-            &self,
-            file_url: &url::Url,
-            filename: &str,
-            base_dir: &std::path::Path,
-        ) -> Result<()>;
+    async fn download_torrent(
+        &mut self,
+        id: &str,
+        file_url: &url::Url,
+        filename: &str,
+        base_dir: &std::path::Path,
+    ) -> Result<()>;
+
+    async fn wait_until_finished(&mut self, id: &str) -> Result<()>;
+
+    fn get_stats_receiver(&self, id: &str) -> Option<tokio::sync::watch::Receiver<app_lib::torrent::TorrentStats> >;
     }
 }
 
@@ -31,10 +37,16 @@ async fn test_e2e_download() {
     let session = Session::new(dir.path().to_path_buf()).await.unwrap();
     let client = reqwest::Client::new();
 
-    let rqbit = RqbitService::new(session, client.clone());
-    let nyaa = Nyaa::new(Arc::new(rqbit), client);
+    let rqbit = Arc::new(Mutex::new(RqbitService::new(session, client.clone())));
+    let nyaa = Nyaa::new(rqbit.clone(), client);
 
     nyaa.download("1990813", dir.path()).await.unwrap();
+    rqbit
+        .lock()
+        .await
+        .wait_until_finished("1990813")
+        .await
+        .unwrap();
 
     let library = read_dir(dir.path())
         .unwrap()
@@ -61,7 +73,7 @@ async fn test_e2e_search() {
     let client = reqwest::Client::new();
     let rqbit = MockTorrentService::new();
 
-    let nyaa = Nyaa::new(Arc::new(rqbit), client);
+    let nyaa = Nyaa::new(Arc::new(Mutex::new(rqbit)), client);
     let (results, pagination) = nyaa.search("c=3_0").await.unwrap();
     assert_eq!(75, results.len());
     assert_eq!(

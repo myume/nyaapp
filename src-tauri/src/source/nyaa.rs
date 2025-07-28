@@ -10,12 +10,13 @@ use chrono::DateTime;
 use regex::Regex;
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
 use std::{path::Path, sync::Arc};
+use tokio::sync::Mutex;
 use url::Url;
 
 pub struct Nyaa {
     base_url: Url,
     client: reqwest::Client,
-    torrent_service: Arc<dyn TorrentService>,
+    torrent_service: Arc<Mutex<dyn TorrentService>>,
 }
 
 mod category;
@@ -60,7 +61,7 @@ impl NyaaParseConfig {
 }
 
 impl Nyaa {
-    pub fn new(torrent_service: Arc<dyn TorrentService>, client: reqwest::Client) -> Self {
+    pub fn new(torrent_service: Arc<Mutex<dyn TorrentService>>, client: reqwest::Client) -> Self {
         Self {
             base_url: Url::parse("https://nyaa.si/").unwrap(),
             client,
@@ -277,7 +278,9 @@ impl Source for Nyaa {
         let output_dir = base_dir.join(&title);
 
         self.torrent_service
-            .download_torrent(&url, &format!("{}.torrent", title), &output_dir)
+            .lock()
+            .await
+            .download_torrent(id, &url, &format!("{}.torrent", title), &output_dir)
             .await
     }
 }
@@ -310,7 +313,10 @@ mod tests {
         "i’m the evil lord of an intergalactic empire!"
     )]
     fn test_normalize_title(#[case] title: &str, #[case] expected: &str) {
-        let nyaa = Nyaa::new(Arc::new(MockRqbitService::new()), reqwest::Client::new());
+        let nyaa = Nyaa::new(
+            Arc::new(Mutex::new(MockRqbitService::new())),
+            reqwest::Client::new(),
+        );
         let actual = nyaa.normalize_title(title);
         assert_eq!(actual, expected);
     }

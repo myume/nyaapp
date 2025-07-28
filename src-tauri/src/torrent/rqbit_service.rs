@@ -1,26 +1,42 @@
-use anyhow::Result;
+use anyhow::{Context, Ok, Result};
 use async_trait::async_trait;
-use librqbit::{AddTorrent, AddTorrentOptions};
+use librqbit::{AddTorrent, AddTorrentOptions, ManagedTorrent, TorrentStats as RqBitTorrentStats};
 
+use log::info;
 #[cfg(test)]
 use mockall::automock;
 
 use std::{
+    collections::HashMap,
     path::{Path, PathBuf},
     sync::Arc,
+    time::Duration,
 };
-use tokio::fs::create_dir;
+use tokio::{
+    fs::create_dir,
+    sync::watch::{self, Receiver},
+};
 
-use crate::{torrent::TorrentService, utils::download_file_from_url};
+use crate::{
+    torrent::{TorrentService, TorrentStats},
+    utils::download_file_from_url,
+};
 
 pub struct RqbitService {
     session: Arc<librqbit::Session>,
     client: reqwest::Client,
+    handles: HashMap<String, Arc<ManagedTorrent>>,
+    receivers: HashMap<String, Receiver<TorrentStats>>,
 }
 
 impl RqbitService {
     pub fn new(session: Arc<librqbit::Session>, client: reqwest::Client) -> Self {
-        Self { session, client }
+        Self {
+            session,
+            client,
+            handles: HashMap::new(),
+            receivers: HashMap::new(),
+        }
     }
 
     async fn download_torrent_file(
@@ -49,13 +65,25 @@ impl RqbitService {
         );
         Ok(output_path)
     }
+
+    fn to_stats(id: String, stats: RqBitTorrentStats) -> TorrentStats {
+        TorrentStats {
+            id,
+            state: stats.state.to_string(),
+            progress_bytes: stats.progress_bytes,
+            uploaded_bytes: stats.uploaded_bytes,
+            total_bytes: stats.total_bytes,
+            finished: stats.finished,
+        }
+    }
 }
 
 #[cfg_attr(test, automock)]
 #[async_trait]
 impl TorrentService for RqbitService {
     async fn download_torrent(
-        &self,
+        &mut self,
+        id: &str,
         file_url: &url::Url,
         filename: &str,
         output_dir: &Path,
@@ -86,8 +114,44 @@ impl TorrentService for RqbitService {
             .into_handle()
             .unwrap();
 
-        handle.wait_until_completed().await?;
-        log::info!("Download for {} is complete!", filename);
+        let (tx, rx) = watch::channel(Self::to_stats(id.to_owned(), handle.stats()));
+        self.receivers.insert(id.to_owned(), rx);
+
+        tokio::spawn({
+            let h = handle.clone();
+            let id = id.to_owned();
+            async move {
+                while !h.stats().finished {
+                    let stats = h.stats();
+                    info!("{}", stats);
+                    tx.send(Self::to_stats(id.to_owned(), stats))?;
+                    tokio::time::sleep(Duration::from_secs(1)).await;
+                }
+                info!("{}", h.stats());
+                Ok(())
+            }
+        });
+
+        self.handles.insert(id.to_owned(), handle);
+
         Ok(())
+    }
+
+    async fn wait_until_finished(&mut self, id: &str) -> Result<()> {
+        let handle = self
+            .handles
+            .get(id)
+            .context(format!("No download with id {}", id))?;
+
+        handle.wait_until_completed().await?;
+        log::info!("Download for {} is complete!", id);
+
+        self.handles.remove(id);
+
+        Ok(())
+    }
+
+    fn get_stats_receiver(&self, id: &str) -> Option<Receiver<TorrentStats>> {
+        self.receivers.get(id).cloned()
     }
 }
