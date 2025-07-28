@@ -27,6 +27,8 @@ mock! {
     async fn wait_until_finished(&mut self, id: &str) -> Result<()>;
 
     fn get_stats_receiver(&self, id: &str) -> Option<tokio::sync::watch::Receiver<app_lib::torrent::TorrentStats> >;
+
+    fn list_torrents(&self) -> Vec<app_lib::torrent::TorrentStats>;
     }
 }
 

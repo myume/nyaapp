@@ -30,4 +30,6 @@ pub trait TorrentService: Send + Sync {
     async fn wait_until_finished(&mut self, id: &str) -> Result<()>;
 
     fn get_stats_receiver(&self, id: &str) -> Option<Receiver<TorrentStats>>;
+
+    fn list_torrents(&self) -> Vec<TorrentStats>;
 }

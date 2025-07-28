@@ -27,6 +27,7 @@ pub struct RqbitService {
     client: reqwest::Client,
     handles: HashMap<String, Arc<ManagedTorrent>>,
     receivers: HashMap<String, Receiver<TorrentStats>>,
+    id_translation: HashMap<usize, String>, // torrent id to source id
 }
 
 impl RqbitService {
@@ -36,6 +37,7 @@ impl RqbitService {
             client,
             handles: HashMap::new(),
             receivers: HashMap::new(),
+            id_translation: HashMap::new(),
         }
     }
 
@@ -83,7 +85,7 @@ impl RqbitService {
 impl TorrentService for RqbitService {
     async fn download_torrent(
         &mut self,
-        id: &str,
+        source_id: &str,
         file_url: &url::Url,
         filename: &str,
         output_dir: &Path,
@@ -114,12 +116,15 @@ impl TorrentService for RqbitService {
             .into_handle()
             .unwrap();
 
-        let (tx, rx) = watch::channel(Self::to_stats(id.to_owned(), handle.stats()));
-        self.receivers.insert(id.to_owned(), rx);
+        self.id_translation
+            .insert(handle.id(), source_id.to_owned());
+
+        let (tx, rx) = watch::channel(Self::to_stats(source_id.to_owned(), handle.stats()));
+        self.receivers.insert(source_id.to_owned(), rx);
 
         tokio::spawn({
             let h = handle.clone();
-            let id = id.to_owned();
+            let id = source_id.to_owned();
             async move {
                 while !h.stats().finished {
                     let stats = h.stats();
@@ -133,27 +138,44 @@ impl TorrentService for RqbitService {
             }
         });
 
-        self.handles.insert(id.to_owned(), handle);
+        self.handles.insert(source_id.to_owned(), handle);
 
         Ok(())
     }
 
-    async fn wait_until_finished(&mut self, id: &str) -> Result<()> {
+    async fn wait_until_finished(&mut self, source_id: &str) -> Result<()> {
         let handle = self
             .handles
-            .get(id)
-            .context(format!("No download with id {}", id))?;
+            .get(source_id)
+            .context(format!("No download with id {}", source_id))?;
 
         handle.wait_until_completed().await?;
-        log::info!("Download for {} is complete!", id);
+        log::info!("Download for {} is complete!", source_id);
 
-        self.handles.remove(id);
-        self.receivers.remove(id);
+        self.id_translation.remove(&handle.id());
+        self.handles.remove(source_id);
+        self.receivers.remove(source_id);
 
         Ok(())
     }
 
-    fn get_stats_receiver(&self, id: &str) -> Option<Receiver<TorrentStats>> {
-        self.receivers.get(id).cloned()
+    fn get_stats_receiver(&self, source_id: &str) -> Option<Receiver<TorrentStats>> {
+        self.receivers.get(source_id).cloned()
+    }
+
+    fn list_torrents(&self) -> Vec<TorrentStats> {
+        self.session.with_torrents(|torrents| {
+            torrents
+                .map(|(id, torrent)| {
+                    Self::to_stats(
+                        self.id_translation
+                            .get(&id)
+                            .expect("Torrent to have a source id")
+                            .to_owned(),
+                        torrent.stats(),
+                    )
+                })
+                .collect::<Vec<TorrentStats>>()
+        })
     }
 }
