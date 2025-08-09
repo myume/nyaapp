@@ -15,6 +15,12 @@ pub struct TorrentStats {
     uploaded_bytes: u64,
     total_bytes: u64,
     finished: bool,
+
+    // speed is in mbps
+    upload_speed: Option<f64>,
+    download_speed: Option<f64>,
+
+    remaining_time: Option<String>,
 }
 
 #[async_trait]

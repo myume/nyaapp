@@ -76,6 +76,14 @@ impl RqbitService {
             uploaded_bytes: stats.uploaded_bytes,
             total_bytes: stats.total_bytes,
             finished: stats.finished,
+            upload_speed: stats.live.as_ref().map(|l| l.upload_speed.mbps),
+            download_speed: stats.live.as_ref().map(|l| l.download_speed.mbps),
+            remaining_time: stats
+                .live
+                .as_ref()
+                .map(|l| l.time_remaining.as_ref())
+                .flatten()
+                .map(|d| d.to_string()),
         }
     }
 }

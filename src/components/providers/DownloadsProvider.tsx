@@ -17,6 +17,9 @@ type DownloadInfo = {
   uploaded_bytes: number;
   total_bytes: number;
   finished: boolean;
+  upload_speed: number | null;
+  download_speed: number | null;
+  remaining_time: string | null;
 };
 
 type DownloadsContextType = {
@@ -43,6 +46,9 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
           uploaded_bytes: 0,
           total_bytes: 0,
           finished: false,
+          upload_speed: null,
+          download_speed: null,
+          remaining_time: null,
         },
       }));
     });
