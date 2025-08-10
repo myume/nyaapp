@@ -10,6 +10,7 @@ pub mod rqbit_service;
 #[derive(Clone, Serialize)]
 pub struct TorrentStats {
     id: String,
+    name: String,
     state: String,
     progress_bytes: u64,
     uploaded_bytes: u64,

@@ -1,6 +1,6 @@
 use anyhow::{Context, Ok, Result};
 use async_trait::async_trait;
-use librqbit::{AddTorrent, AddTorrentOptions, ManagedTorrent, TorrentStats as RqBitTorrentStats};
+use librqbit::{AddTorrent, AddTorrentOptions, ManagedTorrent};
 
 use log::info;
 #[cfg(test)]
@@ -68,9 +68,11 @@ impl RqbitService {
         Ok(output_path)
     }
 
-    fn to_stats(id: String, stats: RqBitTorrentStats) -> TorrentStats {
+    fn to_stats(id: String, handle: Arc<ManagedTorrent>) -> TorrentStats {
+        let stats = handle.stats();
         TorrentStats {
             id,
+            name: handle.name().unwrap_or("".to_owned()),
             state: stats.state.to_string(),
             progress_bytes: stats.progress_bytes,
             uploaded_bytes: stats.uploaded_bytes,
@@ -127,7 +129,7 @@ impl TorrentService for RqbitService {
         self.id_translation
             .insert(handle.id(), source_id.to_owned());
 
-        let (tx, rx) = watch::channel(Self::to_stats(source_id.to_owned(), handle.stats()));
+        let (tx, rx) = watch::channel(Self::to_stats(source_id.to_owned(), handle.clone()));
         self.receivers.insert(source_id.to_owned(), rx);
 
         tokio::spawn({
@@ -137,10 +139,10 @@ impl TorrentService for RqbitService {
                 while !h.stats().finished {
                     let stats = h.stats();
                     info!("{}", stats);
-                    tx.send(Self::to_stats(id.to_owned(), stats))?;
+                    tx.send(Self::to_stats(id.to_owned(), h.clone()))?;
                     tokio::time::sleep(Duration::from_secs(1)).await;
                 }
-                tx.send(Self::to_stats(id.to_owned(), h.stats()))?;
+                tx.send(Self::to_stats(id.to_owned(), h.clone()))?;
                 info!("{}", h.stats());
                 Ok(())
             }
@@ -180,7 +182,7 @@ impl TorrentService for RqbitService {
                             .get(&id)
                             .expect("Torrent to have a source id")
                             .to_owned(),
-                        torrent.stats(),
+                        torrent.clone(),
                     )
                 })
                 .collect::<Vec<TorrentStats>>()

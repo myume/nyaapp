@@ -68,6 +68,10 @@ impl AppService {
         self.source.download(id, &library_dir).await
     }
 
+    pub async fn get_title_by_id(&self, id: &str) -> Result<String> {
+        self.source.get_title_by_id(id).await
+    }
+
     fn get_metadata_provider_from_category(
         &self,
         category: &Category,

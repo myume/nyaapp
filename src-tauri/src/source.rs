@@ -45,4 +45,6 @@ pub trait Source: Send + Sync {
     async fn search(&self, query: &str) -> Result<(Vec<SourceMedia>, PaginationInfo)>;
 
     async fn download(&self, id: &str, file_path: &Path) -> Result<()>;
+
+    async fn get_title_by_id(&self, id: &str) -> Result<String>;
 }

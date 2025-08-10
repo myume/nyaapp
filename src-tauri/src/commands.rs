@@ -12,7 +12,18 @@ pub async fn download(
     id: String,
 ) -> Result<(), String> {
     app_handle
-        .emit("download-started", &id)
+        .emit(
+            "download-started",
+            (
+                id.clone(),
+                state
+                    .lock()
+                    .await
+                    .get_title_by_id(&id)
+                    .await
+                    .unwrap_or("".to_owned()),
+            ),
+        )
         .map_err(|e| e.to_string())?;
 
     state

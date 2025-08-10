@@ -10,8 +10,9 @@ import {
 } from "react";
 import { toast } from "sonner";
 
-type DownloadInfo = {
+export type DownloadInfo = {
   id: string;
+  name: string | null;
   state: "initializing" | "live" | "paused" | "error";
   progress_bytes: number;
   uploaded_bytes: number;
@@ -35,12 +36,14 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
   const [downloads, setDownloads] = useState<Record<string, DownloadInfo>>({});
 
   useEffect(() => {
-    listen<string>("download-started", ({ payload: id }) => {
-      toast(`Started download for ${id}`);
+    listen<string[]>("download-started", ({ payload }) => {
+      const [id, name] = payload;
+      toast(`Downloading: ${name}`);
       setDownloads((downloads) => ({
         ...downloads,
         [id]: {
           id,
+          name,
           state: "initializing",
           progress_bytes: 0,
           uploaded_bytes: 0,
@@ -61,14 +64,16 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
     });
 
     listen<string>("download-completed", ({ payload: id }) => {
-      toast(`Finished download for ${id}`);
-      setDownloads((downloads) => ({
-        ...downloads,
-        [id]: {
-          ...downloads[id],
-          finished: true,
-        },
-      }));
+      setDownloads((downloads) => {
+        toast(`Finished downloading: ${downloads[id].name}`);
+        return {
+          ...downloads,
+          [id]: {
+            ...downloads[id],
+            finished: true,
+          },
+        };
+      });
     });
   }, []);
 

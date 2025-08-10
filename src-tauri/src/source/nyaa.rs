@@ -83,20 +83,6 @@ impl Nyaa {
             .context(format!("Missing id on href: {}", href))
     }
 
-    async fn get_title_by_id(&self, id: &str) -> Result<String> {
-        let url = self.base_url.join("view/")?.join(id)?;
-        let html = self.fetch_page(&url).await?;
-        let title_selector = Selector::parse(".panel-title").expect("title selector to be valid");
-        Ok(html
-            .select(&title_selector)
-            .next()
-            .context(format!("Missing title for id: {}", id))?
-            .text()
-            .collect::<String>()
-            .trim()
-            .to_owned())
-    }
-
     fn parse_row(row: ElementRef, config: &NyaaParseConfig) -> Result<SourceMedia> {
         let category = row
             .select(&config.category)
@@ -282,6 +268,20 @@ impl Source for Nyaa {
             .await
             .download_torrent(id, &url, &format!("{}.torrent", title), &output_dir)
             .await
+    }
+
+    async fn get_title_by_id(&self, id: &str) -> Result<String> {
+        let url = self.base_url.join("view/")?.join(id)?;
+        let html = self.fetch_page(&url).await?;
+        let title_selector = Selector::parse(".panel-title").expect("title selector to be valid");
+        Ok(html
+            .select(&title_selector)
+            .next()
+            .context(format!("Missing title for id: {}", id))?
+            .text()
+            .collect::<String>()
+            .trim()
+            .to_owned())
     }
 }
 
