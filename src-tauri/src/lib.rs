@@ -38,7 +38,8 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::download,
             commands::search,
-            commands::list_torrents
+            commands::list_torrents,
+            commands::toggle_pause
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

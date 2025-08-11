@@ -34,9 +34,11 @@ pub trait TorrentService: Send + Sync {
         base_dir: &Path,
     ) -> Result<()>;
 
-    async fn wait_until_finished(&mut self, id: &str) -> Result<()>;
+    async fn wait_until_finished(&mut self, source_id: &str) -> Result<()>;
 
-    fn get_stats_receiver(&self, id: &str) -> Option<Receiver<TorrentStats>>;
+    fn get_stats_receiver(&self, source_id: &str) -> Option<Receiver<TorrentStats>>;
 
     fn list_torrents(&self) -> Vec<TorrentStats>;
+
+    async fn toggle_pause(&mut self, source_id: &str) -> Result<()>;
 }

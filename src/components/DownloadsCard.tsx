@@ -1,10 +1,12 @@
 import { bytesToString } from "@/lib/utils";
 import { DownloadInfo } from "./providers/DownloadsProvider";
-import { Download, Upload } from "lucide-react";
+import { Check, Download, Pause, Play, Upload } from "lucide-react";
 import { Progress } from "./ui/progress";
+import { invoke } from "@tauri-apps/api/core";
 
 export const DownloadsCard = ({
   download: {
+    id,
     name,
     state,
     finished,
@@ -22,6 +24,15 @@ export const DownloadsCard = ({
     <div className="p-5 border-1 rounded-xl">
       <h1>{name}</h1>
       <div className="flex items-center gap-2 py-2">
+        {finished ? (
+          <Check />
+        ) : state === "live" ? (
+          <Pause onClick={async () => await invoke("toggle_pause", { id })} />
+        ) : state === "paused" ? (
+          <Play onClick={async () => await invoke("toggle_pause", { id })} />
+        ) : (
+          <></>
+        )}
         <Progress value={percentage} />
         <h3>{percentage.toFixed(2)}%</h3>
       </div>
@@ -34,11 +45,11 @@ export const DownloadsCard = ({
       <div className="flex gap-2">
         <div className="flex gap-1 items-center">
           <Download size={16} />
-          <h4>{download_speed?.toFixed(2)} MiB/s</h4>
+          <h4>{(download_speed ?? 0).toFixed(2)} MiB/s</h4>
         </div>
         <div className="flex gap-1 items-center">
           <Upload size={16} />
-          <h4>{upload_speed?.toFixed(2)} MiB/s</h4>
+          <h4>{(upload_speed ?? 0).toFixed(2)} MiB/s</h4>
         </div>
       </div>
       <h3 className="text-xs text-muted-foreground mt-2">

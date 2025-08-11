@@ -159,4 +159,8 @@ impl AppService {
             pagination,
         })
     }
+
+    pub async fn toggle_pause(&self, id: &str) -> Result<()> {
+        self.torrent_service.lock().await.toggle_pause(id).await
+    }
 }

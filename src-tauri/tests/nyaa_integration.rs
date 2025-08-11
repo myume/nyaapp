@@ -29,6 +29,8 @@ mock! {
     fn get_stats_receiver(&self, id: &str) -> Option<tokio::sync::watch::Receiver<app_lib::torrent::TorrentStats> >;
 
     fn list_torrents(&self) -> Vec<app_lib::torrent::TorrentStats>;
+
+    async fn toggle_pause(&mut self, source_id: &str) -> Result<()>;
     }
 }
 

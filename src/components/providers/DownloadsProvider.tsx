@@ -81,6 +81,8 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
           [id]: {
             ...downloads[id],
             finished: true,
+            download_speed: null,
+            upload_speed: null,
           },
         };
       });

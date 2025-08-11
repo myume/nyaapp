@@ -49,13 +49,31 @@ impl RqbitService {
         client: reqwest::Client,
         session_store_path: &Path,
     ) -> Self {
-        Self {
+        let mut instance = Self {
             session,
             client,
             handles: HashMap::new(),
             receivers: HashMap::new(),
             id_translation: RqbitService::restore_id_translation(session_store_path).await,
-        }
+        };
+        instance.restore_handles();
+        instance
+    }
+
+    fn restore_handles(&mut self) -> () {
+        let restored_handles = self.session.with_torrents(|torrents| {
+            let mut handles = HashMap::new();
+            torrents.for_each(|(id, handle)| {
+                let source_id = self
+                    .id_translation
+                    .get(&id)
+                    .expect("missing source id for torrent");
+                handles.insert(source_id.to_owned(), handle.clone());
+            });
+            handles
+        });
+
+        self.handles = restored_handles;
     }
 
     async fn restore_id_translation(session_store_path: &Path) -> HashMap<usize, String> {
@@ -150,6 +168,7 @@ impl TorrentService for RqbitService {
             .await?;
 
         let mut options = AddTorrentOptions::default();
+        options.overwrite = true;
         options.output_folder = Some(
             output_dir
                 .to_str()
@@ -177,7 +196,7 @@ impl TorrentService for RqbitService {
             let h = handle.clone();
             let id = source_id.to_owned();
             async move {
-                while !h.stats().finished {
+                while !h.stats().finished && !h.is_paused() {
                     let stats = h.stats();
                     info!("{}", stats);
                     tx.send(Self::to_stats(id.to_owned(), h.clone()))?;
@@ -228,5 +247,42 @@ impl TorrentService for RqbitService {
                 })
                 .collect::<Vec<TorrentStats>>()
         })
+    }
+
+    async fn toggle_pause(&mut self, source_id: &str) -> Result<()> {
+        let handle = self
+            .handles
+            .get(source_id)
+            .context(format!("No download with id {}", source_id))?;
+
+        if handle.is_paused() {
+            self.session.unpause(handle).await?;
+
+            if self.receivers.get(source_id).is_none() {
+                let (tx, rx) = watch::channel(Self::to_stats(source_id.to_owned(), handle.clone()));
+                self.receivers.insert(source_id.to_owned(), rx);
+
+                tokio::spawn({
+                    let h = handle.clone();
+                    let id = source_id.to_owned();
+                    async move {
+                        while !h.stats().finished && !h.is_paused() {
+                            let stats = h.stats();
+                            info!("{}", stats);
+                            tx.send(Self::to_stats(id.to_owned(), h.clone()))?;
+                            tokio::time::sleep(Duration::from_secs(1)).await;
+                        }
+                        tx.send(Self::to_stats(id.to_owned(), h.clone()))?;
+                        info!("{}", h.stats());
+                        Ok(())
+                    }
+                });
+            }
+        } else {
+            self.session.pause(handle).await?;
+            self.receivers.remove(source_id);
+        }
+
+        Ok(())
     }
 }
