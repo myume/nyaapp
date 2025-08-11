@@ -1,6 +1,7 @@
 use std::str::FromStr;
 
 use anyhow::{anyhow, Context, Ok, Result};
+use log::error;
 use strum_macros::EnumString;
 
 use crate::source::Category;
@@ -53,6 +54,23 @@ impl NyaaCategory {
     pub fn to_source_category(&self) -> Category {
         match self {
             NyaaCategory::Literature(_) => Category::Manga,
+        }
+    }
+
+    pub fn from_str(s: &str) -> Self {
+        match s.trim() {
+            "Literature - English-translated" => {
+                Self::Literature(LiteratureSubCategory::EnglishTranslated)
+            }
+
+            "Literature - Raw" => Self::Literature(LiteratureSubCategory::Raw),
+            "Literature - Non-English-translated" => {
+                Self::Literature(LiteratureSubCategory::NonEnglishTranslated)
+            }
+            _ => {
+                error!("Unsupported Category {}", s.trim());
+                unreachable!("Unsupported Category")
+            }
         }
     }
 }

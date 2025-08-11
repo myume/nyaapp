@@ -30,7 +30,7 @@ pub enum Category {
 }
 
 #[derive(Debug, Serialize)]
-pub struct SourceMedia {
+pub struct MediaInfo {
     pub id: String,
     pub category: Category,
     pub title: String,
@@ -53,11 +53,11 @@ pub struct PaginationInfo {
 pub trait Source: Send + Sync {
     fn normalize_title(&self, title: &str) -> String;
 
-    async fn search(&self, query: &str) -> Result<(Vec<SourceMedia>, PaginationInfo)>;
+    async fn search(&self, query: &str) -> Result<(Vec<MediaInfo>, PaginationInfo)>;
 
     async fn download(&self, id: &str, file_path: &Path) -> Result<PathBuf>;
 
-    async fn get_title_by_id(&self, id: &str) -> Result<String>;
+    async fn get_info_by_id(&self, id: &str) -> Result<MediaInfo>;
 
     fn get_variant(&self) -> Sources;
 }

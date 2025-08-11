@@ -1,5 +1,5 @@
 use crate::{
-    source::{nyaa::category::NyaaCategory, PaginationInfo, SourceMedia, Sources},
+    source::{nyaa::category::NyaaCategory, MediaInfo, PaginationInfo, Sources},
     torrent::TorrentService,
 };
 
@@ -86,7 +86,7 @@ impl Nyaa {
             .context(format!("Missing id on href: {}", href))
     }
 
-    fn parse_row(row: ElementRef, config: &NyaaParseConfig) -> Result<SourceMedia> {
+    fn parse_row(row: ElementRef, config: &NyaaParseConfig) -> Result<MediaInfo> {
         let category = row
             .select(&config.category)
             .next()
@@ -148,7 +148,7 @@ impl Nyaa {
             .collect::<String>()
             .parse()?;
 
-        Ok(SourceMedia {
+        Ok(MediaInfo {
             id,
             category: NyaaCategory::from_query_param(category)?.to_source_category(),
             title,
@@ -227,7 +227,7 @@ impl Source for Nyaa {
         multi_space.replace_all(&normalized, " ").to_string()
     }
 
-    async fn search(&self, query: &str) -> Result<(Vec<SourceMedia>, PaginationInfo)> {
+    async fn search(&self, query: &str) -> Result<(Vec<MediaInfo>, PaginationInfo)> {
         log::info!("Searching for {}", query);
         let mut url = self.base_url.clone();
         url.set_query(Some(query));
@@ -263,7 +263,7 @@ impl Source for Nyaa {
             .join("download/")?
             .join(&format!("{}.torrent", id))?;
 
-        let title = self.get_title_by_id(id).await?;
+        let title = self.get_info_by_id(id).await?.title;
         let output_dir = base_dir.join(&title);
 
         self.torrent_service
@@ -275,18 +275,62 @@ impl Source for Nyaa {
         Ok(output_dir)
     }
 
-    async fn get_title_by_id(&self, id: &str) -> Result<String> {
+    async fn get_info_by_id(&self, id: &str) -> Result<MediaInfo> {
         let url = self.base_url.join("view/")?.join(id)?;
         let html = self.fetch_page(&url).await?;
         let title_selector = Selector::parse(".panel-title").expect("title selector to be valid");
-        Ok(html
+
+        let title = html
             .select(&title_selector)
             .next()
             .context(format!("Missing title for id: {}", id))?
             .text()
             .collect::<String>()
             .trim()
-            .to_owned())
+            .to_owned();
+
+        let timestamp = html
+            .select(
+                &Selector::parse("div.row:nth-child(1) > div:nth-child(4)")
+                    .expect("valid timestamp selector"),
+            )
+            .next()
+            .context("Missing timestamp")?
+            .attr("data-timestamp")
+            .context("Missing timestamp")?
+            .parse()
+            .context("Invalid timestamp")?;
+
+        let cols = html
+            .select(&Selector::parse(".panel-body .col-md-5").expect("invalid body selector"))
+            .map(|element| element.text().collect())
+            .collect::<Vec<String>>();
+
+        let config = NyaaParseConfig::new();
+
+        Ok(MediaInfo {
+            id: id.to_owned(),
+            category: NyaaCategory::from_str(cols.get(0).expect("Missing category"))
+                .to_source_category(),
+            title,
+            size: FileSize::from(cols.get(6).expect("Missing file size"), &config.size_regex)?,
+            timestamp: DateTime::from_timestamp(timestamp, 0).context("Invalid timestamp")?,
+            seeders: cols
+                .get(3)
+                .expect("Missing seederes")
+                .parse()
+                .context("failed to parse seeders")?,
+            leechers: cols
+                .get(5)
+                .expect("Missing seederes")
+                .parse()
+                .context("failed to parse leechers")?,
+            completed: cols
+                .get(7)
+                .expect("Missing seederes")
+                .parse()
+                .context("failed to parse completed")?,
+        })
     }
 
     fn get_variant(&self) -> Sources {

@@ -16,7 +16,7 @@ import { useDownloads } from "./providers/DownloadsProvider";
 
 export const SourceCard = ({
   searchResult: {
-    source_media: {
+    media_info: {
       id,
       title,
       size: { unit, size },

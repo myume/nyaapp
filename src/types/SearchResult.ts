@@ -1,9 +1,9 @@
 import { Metadata } from "./Metadata";
 import { PaginationInfo } from "./PaginationInfo";
-import { SourceMedia } from "./SourceInfo";
+import { MediaInfo } from "./SourceInfo";
 
 export type SearchResult = {
-  source_media: SourceMedia;
+  media_info: MediaInfo;
   metadata?: Metadata;
 };
 

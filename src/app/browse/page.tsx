@@ -122,7 +122,7 @@ export default function Browse() {
         <div>
           <div className="grid md:grid-cols-3 lg:grid-cols-5 gap-5">
             {searchResults.map((result) => (
-              <SourceCard key={result.source_media.id} searchResult={result} />
+              <SourceCard key={result.media_info.id} searchResult={result} />
             ))}
           </div>
           <Pagination className="mt-5 mb-4">

@@ -12,7 +12,7 @@ use tokio::{
 use crate::{
     library::{Library, LibraryEntry},
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
-    source::{nyaa::Nyaa, Category, PaginationInfo, Source, SourceMedia, SourceMeta},
+    source::{nyaa::Nyaa, Category, MediaInfo, PaginationInfo, Source, SourceMeta},
     torrent::{rqbit_service::RqbitService, TorrentService, TorrentStats},
 };
 
@@ -26,7 +26,7 @@ pub struct AppService {
 
 #[derive(Serialize)]
 pub struct SearchResult {
-    source_media: SourceMedia,
+    media_info: MediaInfo,
     metadata: Option<Metadata>,
 }
 
@@ -104,7 +104,7 @@ impl AppService {
     }
 
     pub async fn get_title_by_id(&self, id: &str) -> Result<String> {
-        self.source.get_title_by_id(id).await
+        self.source.get_info_by_id(id).await.map(|info| info.title)
     }
 
     fn get_metadata_provider_from_category(
@@ -121,12 +121,12 @@ impl AppService {
     }
 
     pub async fn search(&self, query: String) -> Result<SearchResponse> {
-        let (source_media, pagination) = self.source.search(&query).await?;
+        let (media_info, pagination) = self.source.search(&query).await?;
         let mut results = vec![];
 
         let mut metadata_hits = 0;
 
-        for media in source_media {
+        for media in media_info {
             let metadata_provider = self.get_metadata_provider_from_category(&media.category);
             let normalized_title = self.source.normalize_title(&media.title);
             let metadata = metadata_provider
@@ -147,7 +147,7 @@ impl AppService {
             }
 
             results.push(SearchResult {
-                source_media: media,
+                media_info: media,
                 metadata,
             });
         }
@@ -170,10 +170,30 @@ impl AppService {
     }
 
     async fn get_metadata_by_id(&self, id: &str) -> Result<Metadata> {
-        todo!()
+        let info = self.source.get_info_by_id(id).await?;
+        let metadata_provider = self.get_metadata_provider_from_category(&info.category);
+        let normalized_title = self.source.normalize_title(&info.title);
+        metadata_provider
+            .fetch_metdata(&normalized_title)
+            .await
+            .map_err(|err| {
+                log::warn!(
+                    "No metdata found for \"{}\": {}",
+                    info.title,
+                    err.to_string()
+                );
+                err
+            })
     }
 
     pub async fn fetch_library(&self) -> Vec<LibraryEntry> {
-        self.library.get_entries()
+        let mut entries = self.library.get_entries();
+        for entry in entries.iter_mut() {
+            entry.metadata = self
+                .get_metadata_by_id(&entry.metafile.source.id)
+                .await
+                .ok();
+        }
+        entries
     }
 }
