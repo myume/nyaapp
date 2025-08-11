@@ -21,7 +21,7 @@ pub struct AppService {
     base_dir: PathBuf,
     pub torrent_service: Arc<Mutex<dyn TorrentService>>,
     pub mangabaka_provider: Arc<Mangabaka>,
-    library: Arc<Library>,
+    library: Arc<Mutex<Library>>,
 }
 
 #[derive(Serialize)]
@@ -75,7 +75,7 @@ impl AppService {
             ),
             base_dir: app_data_dir,
             torrent_service,
-            library: Arc::new(library),
+            library: Arc::new(Mutex::new(library)),
         })
     }
 
@@ -89,8 +89,8 @@ impl AppService {
 
     pub async fn download(&self, id: &str) -> Result<()> {
         let library_dir = self.base_dir.join("library");
-        let output_dir = self.source.download(id, &library_dir).await;
-        let mut metafile = File::create(output_dir?.join(".meta")).await?;
+        let output_dir = self.source.download(id, &library_dir).await?;
+        let mut metafile = File::create(output_dir.join(".meta")).await?;
         let meta = Metafile {
             source: SourceMeta {
                 id: id.to_owned(),
@@ -99,6 +99,11 @@ impl AppService {
         };
 
         metafile.write_all(to_vec(&meta)?.as_slice()).await?;
+        self.library
+            .lock()
+            .await
+            .add_entry(meta, output_dir)
+            .await?;
 
         Ok(())
     }
@@ -187,7 +192,7 @@ impl AppService {
     }
 
     pub async fn fetch_library(&self) -> Vec<LibraryEntry> {
-        let mut entries = self.library.get_entries();
+        let mut entries = self.library.lock().await.get_entries();
         for entry in entries.iter_mut() {
             entry.metadata = self
                 .get_metadata_by_id(&entry.metafile.source.id)
