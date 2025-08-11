@@ -1,5 +1,5 @@
 use crate::{
-    source::{nyaa::category::NyaaCategory, PaginationInfo, SourceMedia},
+    source::{nyaa::category::NyaaCategory, PaginationInfo, SourceMedia, Sources},
     torrent::TorrentService,
 };
 
@@ -9,7 +9,10 @@ use async_trait::async_trait;
 use chrono::DateTime;
 use regex::Regex;
 use scraper::{CaseSensitivity, ElementRef, Html, Selector};
-use std::{path::Path, sync::Arc};
+use std::{
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tokio::sync::Mutex;
 use url::Url;
 
@@ -252,7 +255,7 @@ impl Source for Nyaa {
         Ok((media_info, Nyaa::get_pagination_info(&html)?))
     }
 
-    async fn download(&self, id: &str, base_dir: &Path) -> Result<()> {
+    async fn download(&self, id: &str, base_dir: &Path) -> Result<PathBuf> {
         log::info!("Starting download for {}view/{}", self.base_url, id);
 
         let url = self
@@ -267,7 +270,9 @@ impl Source for Nyaa {
             .lock()
             .await
             .download_torrent(id, &url, &format!("{}.torrent", title), &output_dir)
-            .await
+            .await?;
+
+        Ok(output_dir)
     }
 
     async fn get_title_by_id(&self, id: &str) -> Result<String> {
@@ -282,6 +287,10 @@ impl Source for Nyaa {
             .collect::<String>()
             .trim()
             .to_owned())
+    }
+
+    fn get_variant(&self) -> Sources {
+        Sources::Nyaa
     }
 }
 

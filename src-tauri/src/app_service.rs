@@ -1,15 +1,17 @@
 use anyhow::{Context, Result};
-use librqbit::Session;
-use serde::Serialize;
+use librqbit::{Session, SessionOptions, SessionPersistenceConfig};
+use serde::{Deserialize, Serialize};
+use serde_json::to_vec;
 use std::{path::PathBuf, sync::Arc, vec};
 use tokio::{
-    fs::create_dir,
+    fs::{create_dir, File},
+    io::AsyncWriteExt,
     sync::{watch::Receiver, Mutex},
 };
 
 use crate::{
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
-    source::{nyaa::Nyaa, Category, PaginationInfo, Source, SourceMedia},
+    source::{nyaa::Nyaa, Category, PaginationInfo, Source, SourceMedia, SourceMeta},
     torrent::{rqbit_service::RqbitService, TorrentService, TorrentStats},
 };
 
@@ -32,6 +34,11 @@ pub struct SearchResponse {
     pagination: PaginationInfo,
 }
 
+#[derive(Serialize, Deserialize)]
+pub struct Metafile {
+    pub source: SourceMeta,
+}
+
 impl AppService {
     pub async fn new(app_data_dir: PathBuf) -> Result<Self> {
         log::info!("Initializing app service");
@@ -41,9 +48,21 @@ impl AppService {
             create_dir(&library_dir).await?;
         }
 
-        let session = Session::new(library_dir).await.unwrap();
+        let session = Session::new_with_opts(
+            library_dir,
+            SessionOptions {
+                persistence: Some(SessionPersistenceConfig::Json {
+                    folder: Some(app_data_dir.clone()),
+                }),
+                ..Default::default()
+            },
+        )
+        .await
+        .unwrap();
         let client = reqwest::Client::new();
-        let torrent_service = Arc::new(Mutex::new(RqbitService::new(session, client.clone())));
+        let torrent_service = Arc::new(Mutex::new(
+            RqbitService::new(session, client.clone(), &app_data_dir.join("session.json")).await,
+        ));
 
         Ok(AppService {
             source: Box::new(Nyaa::new(torrent_service.clone(), client.clone())),
@@ -65,7 +84,18 @@ impl AppService {
 
     pub async fn download(&self, id: &str) -> Result<()> {
         let library_dir = self.base_dir.join("library");
-        self.source.download(id, &library_dir).await
+        let output_dir = self.source.download(id, &library_dir).await;
+        let mut metafile = File::create(output_dir?.join(".meta")).await?;
+        let meta = Metafile {
+            source: SourceMeta {
+                id: id.to_owned(),
+                provider: self.source.get_variant(),
+            },
+        };
+
+        metafile.write_all(to_vec(&meta)?.as_slice()).await?;
+
+        Ok(())
     }
 
     pub async fn get_title_by_id(&self, id: &str) -> Result<String> {
@@ -79,6 +109,10 @@ impl AppService {
         match category {
             Category::Manga => self.mangabaka_provider.clone(),
         }
+    }
+
+    pub async fn list_torrents(&self) -> Vec<TorrentStats> {
+        self.torrent_service.lock().await.list_torrents()
     }
 
     pub async fn search(&self, query: String) -> Result<SearchResponse> {

@@ -3,7 +3,10 @@ use std::time::{Duration, Instant};
 use tauri::{Emitter, State};
 use tokio::sync::Mutex;
 
-use crate::app_service::{AppService, SearchResponse};
+use crate::{
+    app_service::{AppService, SearchResponse},
+    torrent::TorrentStats,
+};
 
 #[tauri::command]
 pub async fn download(
@@ -91,4 +94,11 @@ pub async fn search(
     log::info!("Searching took {}ms", elapsed.as_millis());
 
     res
+}
+
+#[tauri::command]
+pub async fn list_torrents(
+    state: State<'_, Mutex<AppService>>,
+) -> Result<Vec<TorrentStats>, String> {
+    Ok(state.lock().await.list_torrents().await)
 }

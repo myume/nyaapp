@@ -1,10 +1,15 @@
 use anyhow::Result;
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use serde::Serialize;
-use std::path::Path;
+use serde::{Deserialize, Serialize};
+use std::path::{Path, PathBuf};
 
 pub mod nyaa;
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Sources {
+    Nyaa,
+}
 
 #[derive(Debug, Serialize)]
 #[serde(tag = "unit", content = "size")]
@@ -44,7 +49,15 @@ pub trait Source: Send + Sync {
 
     async fn search(&self, query: &str) -> Result<(Vec<SourceMedia>, PaginationInfo)>;
 
-    async fn download(&self, id: &str, file_path: &Path) -> Result<()>;
+    async fn download(&self, id: &str, file_path: &Path) -> Result<PathBuf>;
 
     async fn get_title_by_id(&self, id: &str) -> Result<String>;
+
+    fn get_variant(&self) -> Sources;
+}
+
+#[derive(Serialize, Deserialize)]
+pub struct SourceMeta {
+    pub id: String,
+    pub provider: Sources,
 }

@@ -5,6 +5,8 @@ use librqbit::{AddTorrent, AddTorrentOptions, ManagedTorrent};
 use log::info;
 #[cfg(test)]
 use mockall::automock;
+use serde::Deserialize;
+use serde_json::from_str;
 
 use std::{
     collections::HashMap,
@@ -13,11 +15,12 @@ use std::{
     time::Duration,
 };
 use tokio::{
-    fs::create_dir,
+    fs::{create_dir, read_to_string},
     sync::watch::{self, Receiver},
 };
 
 use crate::{
+    app_service::Metafile,
     torrent::{TorrentService, TorrentStats},
     utils::download_file_from_url,
 };
@@ -30,15 +33,53 @@ pub struct RqbitService {
     id_translation: HashMap<usize, String>, // torrent id to source id
 }
 
+#[derive(Deserialize)]
+struct SerializedTorrent {
+    output_folder: PathBuf,
+}
+
+#[derive(Deserialize)]
+struct SerializedSessionDatabase {
+    torrents: HashMap<usize, SerializedTorrent>,
+}
+
 impl RqbitService {
-    pub fn new(session: Arc<librqbit::Session>, client: reqwest::Client) -> Self {
+    pub async fn new(
+        session: Arc<librqbit::Session>,
+        client: reqwest::Client,
+        session_store_path: &Path,
+    ) -> Self {
         Self {
             session,
             client,
             handles: HashMap::new(),
             receivers: HashMap::new(),
-            id_translation: HashMap::new(),
+            id_translation: RqbitService::restore_id_translation(session_store_path).await,
         }
+    }
+
+    async fn restore_id_translation(session_store_path: &Path) -> HashMap<usize, String> {
+        let mut id_translation = HashMap::new();
+        if session_store_path.exists() {
+            let content = read_to_string(session_store_path)
+                .await
+                .expect("Session store to be present");
+            let serialized_torrents: SerializedSessionDatabase =
+                from_str(&content).expect("session.json to be a serialized torrent");
+
+            for (id, torrent) in serialized_torrents.torrents.iter() {
+                let content = read_to_string(torrent.output_folder.join(".meta"))
+                    .await
+                    .expect(".meta file to be present");
+
+                let metafile: Metafile =
+                    from_str(&content).expect(".meta to follow format of Metafile");
+
+                id_translation.insert(id.to_owned(), metafile.source.id);
+            }
+        }
+
+        id_translation
     }
 
     async fn download_torrent_file(

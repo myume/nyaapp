@@ -1,5 +1,6 @@
 "use client";
 
+import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import {
   createContext,
@@ -36,6 +37,15 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
   const [downloads, setDownloads] = useState<Record<string, DownloadInfo>>({});
 
   useEffect(() => {
+    (async () => {
+      let results = await invoke<DownloadInfo[]>("list_torrents");
+      setDownloads(
+        results.reduce((acc, curr) => {
+          return { ...acc, [curr.id]: curr };
+        }, {}),
+      );
+    })();
+
     listen<string[]>("download-started", ({ payload }) => {
       const [id, name] = payload;
       toast(`Downloading: ${name}`);
