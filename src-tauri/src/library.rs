@@ -13,6 +13,7 @@ use crate::{app_service::Metafile, metadata::Metadata, utils::read_files_from_di
 
 #[derive(Serialize, Clone)]
 pub struct LibraryEntry {
+    pub name: String,
     pub metafile: Metafile,
     pub output_dir: PathBuf,
     pub files: Vec<String>,
@@ -39,6 +40,11 @@ impl Library {
             metafile.source.id.clone(),
             LibraryEntry {
                 metafile,
+                name: output_dir
+                    .file_name()
+                    .expect("Missing filename")
+                    .to_string_lossy()
+                    .to_string(),
                 files: read_files_from_dir(&output_dir).await?,
                 output_dir,
                 metadata: None,
@@ -75,6 +81,7 @@ impl Library {
             library.insert(
                 metafile.source.id.clone(),
                 LibraryEntry {
+                    name: dir.file_name().to_string_lossy().to_string(),
                     metafile,
                     output_dir: dir.path(),
                     files,

@@ -6,6 +6,7 @@ type Metafile = {
 };
 
 export type LibraryEntry = {
+  name: string;
   metafile: Metafile;
   output_dir: string;
   files: string[];
