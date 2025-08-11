@@ -5,6 +5,7 @@ use crate::app_service::AppService;
 
 pub mod app_service;
 mod commands;
+pub mod library;
 pub mod metadata;
 pub mod source;
 pub mod torrent;
@@ -39,7 +40,8 @@ pub fn run() {
             commands::download,
             commands::search,
             commands::list_torrents,
-            commands::toggle_pause
+            commands::toggle_pause,
+            commands::list_library
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

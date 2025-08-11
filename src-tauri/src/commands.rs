@@ -5,6 +5,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     app_service::{AppService, SearchResponse},
+    library::LibraryEntry,
     torrent::TorrentStats,
 };
 
@@ -137,4 +138,11 @@ pub async fn toggle_pause(
     }
 
     Ok(())
+}
+
+#[tauri::command]
+pub async fn list_library(
+    state: State<'_, Mutex<AppService>>,
+) -> Result<Vec<LibraryEntry>, String> {
+    Ok(state.lock().await.fetch_library().await)
 }

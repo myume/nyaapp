@@ -111,7 +111,7 @@ impl RqbitService {
         log::info!(
             "Downloading torrent file from {} to {}",
             file_url,
-            output_path.to_str().unwrap_or("unknown")
+            output_path.display()
         );
         download_file_from_url(&self.client, &file_url, &filename, base_dir)
             .await
@@ -122,7 +122,7 @@ impl RqbitService {
         log::info!(
             "Finished downloading torrent file from {} to {}",
             file_url,
-            base_dir.to_str().unwrap_or("")
+            base_dir.display()
         );
         Ok(output_path)
     }

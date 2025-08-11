@@ -3,7 +3,10 @@ use std::path::Path;
 use anyhow::Result;
 use flate2::read::GzDecoder;
 use futures::StreamExt;
-use tokio::{fs::File, io::AsyncWriteExt};
+use tokio::{
+    fs::{read_dir, File},
+    io::AsyncWriteExt,
+};
 
 pub async fn download_file_from_url(
     client: &reqwest::Client,
@@ -35,4 +38,14 @@ pub fn unpack_tarball(path: impl AsRef<Path>) -> Result<()> {
     archive.unpack(output_dir)?;
 
     Ok(())
+}
+
+pub async fn read_files_from_dir(path: &Path) -> Result<Vec<String>> {
+    let mut files = vec![];
+    let mut entries = read_dir(path).await?;
+    while let Ok(Some(file)) = entries.next_entry().await {
+        files.push(file.file_name().to_string_lossy().to_string());
+    }
+
+    Ok(files)
 }

@@ -10,6 +10,7 @@ use tokio::{
 };
 
 use crate::{
+    library::{Library, LibraryEntry},
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
     source::{nyaa::Nyaa, Category, PaginationInfo, Source, SourceMedia, SourceMeta},
     torrent::{rqbit_service::RqbitService, TorrentService, TorrentStats},
@@ -20,6 +21,7 @@ pub struct AppService {
     base_dir: PathBuf,
     pub torrent_service: Arc<Mutex<dyn TorrentService>>,
     pub mangabaka_provider: Arc<Mangabaka>,
+    library: Arc<Library>,
 }
 
 #[derive(Serialize)]
@@ -34,7 +36,7 @@ pub struct SearchResponse {
     pagination: PaginationInfo,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Metafile {
     pub source: SourceMeta,
 }
@@ -48,8 +50,10 @@ impl AppService {
             create_dir(&library_dir).await?;
         }
 
+        let library = Library::new(&library_dir).await;
+
         let session = Session::new_with_opts(
-            library_dir,
+            library_dir.clone(),
             SessionOptions {
                 persistence: Some(SessionPersistenceConfig::Json {
                     folder: Some(app_data_dir.clone()),
@@ -71,6 +75,7 @@ impl AppService {
             ),
             base_dir: app_data_dir,
             torrent_service,
+            library: Arc::new(library),
         })
     }
 
@@ -162,5 +167,13 @@ impl AppService {
 
     pub async fn toggle_pause(&self, id: &str) -> Result<()> {
         self.torrent_service.lock().await.toggle_pause(id).await
+    }
+
+    async fn get_metadata_by_id(&self, id: &str) -> Result<Metadata> {
+        todo!()
+    }
+
+    pub async fn fetch_library(&self) -> Vec<LibraryEntry> {
+        self.library.get_entries()
     }
 }

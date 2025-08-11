@@ -76,7 +76,7 @@ impl Mangabaka {
             Mangabaka::download_db(client, output_dir).await?;
         }
 
-        let db_url = format!("sqlite:{}", db_path.to_str().expect("db path to be valid"));
+        let db_url = format!("sqlite:{}", db_path.display());
         let pool = Mangabaka::connect_to_db(&db_url).await?;
 
         if !has_db {
@@ -110,18 +110,11 @@ impl Mangabaka {
             .join("database/")?
             .join(filename)?;
 
-        log::info!(
-            "Downloading Mangabaka db to {}",
-            output_dir.to_str().unwrap_or("unknown dir")
-        );
+        log::info!("Downloading Mangabaka db to {}", output_dir.display());
 
         download_file_from_url(client, &download_url, filename, output_dir).await?;
 
-        log::info!(
-            "Unpacking {} to {}",
-            filename,
-            output_dir.to_str().unwrap_or("unknown dir")
-        );
+        log::info!("Unpacking {} to {}", filename, output_dir.display());
 
         let tarball = output_dir.join(filename);
         unpack_tarball(&tarball)?;

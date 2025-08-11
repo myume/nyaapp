@@ -6,9 +6,15 @@ use std::path::{Path, PathBuf};
 
 pub mod nyaa;
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum Sources {
     Nyaa,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct SourceMeta {
+    pub id: String,
+    pub provider: Sources,
 }
 
 #[derive(Debug, Serialize)]
@@ -54,10 +60,4 @@ pub trait Source: Send + Sync {
     async fn get_title_by_id(&self, id: &str) -> Result<String>;
 
     fn get_variant(&self) -> Sources;
-}
-
-#[derive(Serialize, Deserialize)]
-pub struct SourceMeta {
-    pub id: String,
-    pub provider: Sources,
 }
