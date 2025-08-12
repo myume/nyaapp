@@ -3,11 +3,11 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use anyhow::Result;
+use anyhow::{Context, Result};
 use log::info;
 use serde::Serialize;
 use serde_json::from_str;
-use tokio::fs::{read_dir, read_to_string};
+use tokio::fs::{read_dir, read_to_string, remove_dir_all};
 
 use crate::{app_service::Metafile, utils::read_files_from_dir};
 
@@ -88,5 +88,16 @@ impl Library {
         }
 
         Ok(library)
+    }
+
+    pub async fn delete(&mut self, id: &str) -> Result<()> {
+        let entry = self
+            .entries
+            .remove(id)
+            .context(format!("Missing library entry for {}", id))?;
+
+        remove_dir_all(&entry.output_dir).await?;
+
+        Ok(())
     }
 }

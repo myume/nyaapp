@@ -197,4 +197,13 @@ impl AppService {
         log::info!("Fetching library");
         self.library.lock().await.get_entries()
     }
+
+    pub async fn remove_download(&self, id: &str) -> Result<()> {
+        self.torrent_service.lock().await.remove_torrent(id).await
+    }
+
+    pub async fn delete(&self, id: &str) -> Result<()> {
+        self.torrent_service.lock().await.remove_torrent(id).await?;
+        self.library.lock().await.delete(id).await
+    }
 }

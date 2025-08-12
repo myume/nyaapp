@@ -132,3 +132,39 @@ pub async fn list_library(
 ) -> Result<Vec<LibraryEntry>, String> {
     Ok(state.lock().await.fetch_library().await)
 }
+
+#[tauri::command]
+pub async fn remove_download(
+    app_handle: tauri::AppHandle,
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+) -> Result<(), String> {
+    app_handle
+        .emit("download-removed", id.clone())
+        .map_err(|e| e.to_string())?;
+
+    state
+        .lock()
+        .await
+        .remove_download(&id)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn delete(
+    app_handle: tauri::AppHandle,
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+) -> Result<(), String> {
+    app_handle
+        .emit("download-removed", id.clone())
+        .map_err(|e| e.to_string())?;
+
+    state
+        .lock()
+        .await
+        .delete(&id)
+        .await
+        .map_err(|e| e.to_string())
+}

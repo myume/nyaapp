@@ -1,6 +1,6 @@
 use anyhow::{Context, Ok, Result};
 use async_trait::async_trait;
-use librqbit::{AddTorrent, AddTorrentOptions, ManagedTorrent};
+use librqbit::{api::TorrentIdOrHash, AddTorrent, AddTorrentOptions, ManagedTorrent};
 
 use log::info;
 #[cfg(test)]
@@ -282,6 +282,23 @@ impl TorrentService for RqbitService {
             self.session.pause(handle).await?;
             self.receivers.remove(source_id);
         }
+
+        Ok(())
+    }
+
+    async fn remove_torrent(&mut self, source_id: &str) -> Result<()> {
+        let Some(handle) = self.handles.remove(source_id) else {
+            info!("No handle for {}", source_id);
+            // it's fine if the handle doesn't exist.
+            return Ok(());
+        };
+
+        self.session
+            .delete(TorrentIdOrHash::Id(handle.id()), false)
+            .await?;
+
+        self.id_translation.remove(&handle.id());
+        self.receivers.remove(source_id);
 
         Ok(())
     }

@@ -34,7 +34,9 @@ const DownloadsContext = createContext<DownloadsContextType | undefined>(
 );
 
 export function DownloadsProvider({ children }: { children: ReactNode }) {
-  const [downloads, setDownloads] = useState<Record<string, DownloadInfo>>({});
+  const [downloads, setDownloads] = useState<
+    Record<string, DownloadInfo | undefined>
+  >({});
 
   useEffect(() => {
     (async () => {
@@ -75,6 +77,13 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
         ...downloads,
         [downloadInfo.id]: downloadInfo,
       }));
+    });
+
+    listen<string>("download-removed", ({ payload: id }) => {
+      setDownloads((downloads) => {
+        const { [id]: _, ...rest } = downloads;
+        return rest;
+      });
     });
   }, []);
 

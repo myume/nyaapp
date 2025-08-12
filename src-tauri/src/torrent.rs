@@ -41,4 +41,6 @@ pub trait TorrentService: Send + Sync {
     fn list_torrents(&self) -> Vec<TorrentStats>;
 
     async fn toggle_pause(&mut self, source_id: &str) -> Result<()>;
+
+    async fn remove_torrent(&mut self, source_id: &str) -> Result<()>;
 }

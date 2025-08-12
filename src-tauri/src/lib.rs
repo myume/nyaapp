@@ -41,7 +41,9 @@ pub fn run() {
             commands::search,
             commands::list_torrents,
             commands::toggle_pause,
-            commands::list_library
+            commands::list_library,
+            commands::delete,
+            commands::remove_download,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

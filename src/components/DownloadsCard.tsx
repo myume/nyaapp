@@ -1,6 +1,13 @@
 import { bytesToString } from "@/lib/utils";
 import { DownloadInfo } from "./providers/DownloadsProvider";
-import { Check, Download, Pause, Play, Upload } from "lucide-react";
+import {
+  Check,
+  CircleMinus,
+  Download,
+  Pause,
+  Play,
+  Upload,
+} from "lucide-react";
 import { Progress } from "./ui/progress";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -22,7 +29,13 @@ export const DownloadsCard = ({
   const percentage = (progress_bytes / Math.max(total_bytes, 1)) * 100;
   return (
     <div className="p-5 border-1 rounded-xl">
-      <h1>{name}</h1>
+      <div className="flex justify-between">
+        <h1>{name}</h1>
+        <CircleMinus
+          size={20}
+          onClick={async () => await invoke("remove_download", { id })}
+        />
+      </div>
       <div className="flex items-center gap-2 py-2">
         {finished ? (
           <Check />
