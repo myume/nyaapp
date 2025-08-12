@@ -62,20 +62,6 @@ pub async fn download(
         }
     });
 
-    state
-        .lock()
-        .await
-        .torrent_service
-        .lock()
-        .await
-        .wait_until_finished(&id)
-        .await
-        .map_err(|e| e.to_string())?;
-
-    app_handle
-        .emit("download-completed", &id)
-        .map_err(|e| e.to_string())?;
-
     Ok(())
 }
 

@@ -67,25 +67,14 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
     });
 
     listen<DownloadInfo>("download-progress", ({ payload: downloadInfo }) => {
+      if (downloadInfo.finished) {
+        toast(`Finished downloading: ${downloadInfo.name}`);
+      }
+
       setDownloads((downloads) => ({
         ...downloads,
         [downloadInfo.id]: downloadInfo,
       }));
-    });
-
-    listen<string>("download-completed", ({ payload: id }) => {
-      setDownloads((downloads) => {
-        toast(`Finished downloading: ${downloads[id].name}`);
-        return {
-          ...downloads,
-          [id]: {
-            ...downloads[id],
-            finished: true,
-            download_speed: null,
-            upload_speed: null,
-          },
-        };
-      });
     });
   }, []);
 
