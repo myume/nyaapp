@@ -1,11 +1,15 @@
 "use client";
 
 import { LibraryCard } from "@/components/LibraryCard";
+import { LibraryDetails } from "@/components/LibraryDetails";
+import { Button } from "@/components/ui/button";
 import { LibraryEntry } from "@/types/LibraryEntry";
 import { invoke } from "@tauri-apps/api/core";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Library() {
+  const [selected, setSelected] = useState<LibraryEntry | null>(null);
   const [library, setLibrary] = useState<LibraryEntry[]>();
 
   useEffect(() => {
@@ -19,17 +23,31 @@ export default function Library() {
 
   return (
     <div className="flex flex-wrap gap-5">
-      {library?.map((entry) => (
-        <LibraryCard
-          key={entry.metafile.source.id}
-          libraryEntry={entry}
-          onDeleteAction={(id) => {
-            setLibrary((library) =>
-              library?.filter(({ metafile: { source } }) => source.id !== id),
-            );
-          }}
-        />
-      ))}
+      {selected ? (
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => setSelected(null)}>
+              <ArrowLeft />
+              Back
+            </Button>
+            <h1>{selected.name}</h1>
+          </div>
+          <LibraryDetails libraryEntry={selected} />
+        </div>
+      ) : (
+        library?.map((entry) => (
+          <LibraryCard
+            key={entry.metafile.source.id}
+            libraryEntry={entry}
+            onDeleteAction={(id) => {
+              setLibrary((library) =>
+                library?.filter(({ metafile: { source } }) => source.id !== id),
+              );
+            }}
+            setSelectedAction={setSelected}
+          />
+        ))
+      )}
     </div>
   );
 }

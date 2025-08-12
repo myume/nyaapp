@@ -10,48 +10,57 @@ import {
 } from "./ui/dropdown-menu";
 
 export const LibraryCard = ({
-  libraryEntry: {
+  libraryEntry,
+  onDeleteAction,
+  setSelectedAction,
+}: {
+  libraryEntry: LibraryEntry;
+  onDeleteAction: (id: string) => void;
+  setSelectedAction: (entry: LibraryEntry) => void;
+}) => {
+  const {
     name,
     metafile: {
       source: { id },
       metadata,
     },
-  },
-  onDeleteAction,
-}: {
-  libraryEntry: LibraryEntry;
-  onDeleteAction: (id: string) => void;
-}) => (
-  <div className="flex flex-col items-center border-1 rounded-xl p-4 w-52 gap-2">
-    {metadata?.cover && (
-      <Image
-        src={metadata?.cover}
-        alt="Cover Image"
-        className="rounded"
-        style={{ objectFit: "contain" }}
-        width={200}
-        height={200}
-      />
-    )}
-    <div className="p-2 text-center">
-      <h1>{name}</h1>
+  } = libraryEntry;
+
+  return (
+    <div
+      className="flex flex-col items-center border-1 rounded-xl p-4 w-52 gap-2"
+      onClick={() => setSelectedAction(libraryEntry)}
+    >
+      {metadata?.cover && (
+        <Image
+          src={metadata?.cover}
+          alt="Cover Image"
+          className="rounded"
+          style={{ objectFit: "contain" }}
+          width={200}
+          height={200}
+        />
+      )}
+      <div className="p-2 text-center">
+        <h1>{name}</h1>
+      </div>
+      <div className="flex justify-end w-full">
+        <DropdownMenu>
+          <DropdownMenuTrigger>
+            <EllipsisVertical />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem
+              onClick={async () => {
+                await invoke("delete", { id });
+                onDeleteAction(id);
+              }}
+            >
+              <Trash /> Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
-    <div className="flex justify-end w-full">
-      <DropdownMenu>
-        <DropdownMenuTrigger>
-          <EllipsisVertical />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent>
-          <DropdownMenuItem
-            onClick={async () => {
-              await invoke("delete", { id });
-              onDeleteAction(id);
-            }}
-          >
-            <Trash /> Delete
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
-  </div>
-);
+  );
+};
