@@ -2,11 +2,14 @@ import { LibraryEntry } from "@/types/LibraryEntry";
 import Image from "next/image";
 
 export const LibraryCard = ({
-  libraryEntry: { name, metadata },
+  libraryEntry: {
+    name,
+    metafile: { metadata },
+  },
 }: {
   libraryEntry: LibraryEntry;
 }) => (
-  <div className="flex flex-col items-center border-2 rounded-xl p-4 w-52 gap-2">
+  <div className="flex flex-col items-center border-1 rounded-xl p-4 w-52 gap-2">
     {metadata?.cover && (
       <Image
         src={metadata?.cover}

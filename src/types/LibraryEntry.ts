@@ -3,6 +3,7 @@ import { SourceMeta } from "./SourceInfo";
 
 type Metafile = {
   source: SourceMeta;
+  metadata: Metadata | null;
 };
 
 export type LibraryEntry = {
@@ -10,5 +11,4 @@ export type LibraryEntry = {
   metafile: Metafile;
   output_dir: string;
   files: string[];
-  metadata: Metadata | null;
 };

@@ -9,7 +9,7 @@ use serde::Serialize;
 use serde_json::from_str;
 use tokio::fs::{read_dir, read_to_string};
 
-use crate::{app_service::Metafile, metadata::Metadata, utils::read_files_from_dir};
+use crate::{app_service::Metafile, utils::read_files_from_dir};
 
 #[derive(Serialize, Clone)]
 pub struct LibraryEntry {
@@ -17,7 +17,6 @@ pub struct LibraryEntry {
     pub metafile: Metafile,
     pub output_dir: PathBuf,
     pub files: Vec<String>,
-    pub metadata: Option<Metadata>,
 }
 
 pub struct Library {
@@ -47,7 +46,6 @@ impl Library {
                     .to_string(),
                 files: read_files_from_dir(&output_dir).await?,
                 output_dir,
-                metadata: None,
             },
         );
 
@@ -85,7 +83,6 @@ impl Library {
                     metafile,
                     output_dir: dir.path(),
                     files,
-                    metadata: None,
                 },
             );
         }

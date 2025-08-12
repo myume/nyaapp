@@ -39,6 +39,7 @@ pub struct SearchResponse {
 #[derive(Serialize, Deserialize, Clone)]
 pub struct Metafile {
     pub source: SourceMeta,
+    pub metadata: Option<Metadata>,
 }
 
 impl AppService {
@@ -96,6 +97,7 @@ impl AppService {
                 id: id.to_owned(),
                 provider: self.source.get_variant(),
             },
+            metadata: self.get_metadata_by_id(id).await.ok(),
         };
 
         metafile.write_all(to_vec(&meta)?.as_slice()).await?;
@@ -192,13 +194,7 @@ impl AppService {
     }
 
     pub async fn fetch_library(&self) -> Vec<LibraryEntry> {
-        let mut entries = self.library.lock().await.get_entries();
-        for entry in entries.iter_mut() {
-            entry.metadata = self
-                .get_metadata_by_id(&entry.metafile.source.id)
-                .await
-                .ok();
-        }
-        entries
+        log::info!("Fetching library");
+        self.library.lock().await.get_entries()
     }
 }
