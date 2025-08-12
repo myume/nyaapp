@@ -35,15 +35,19 @@ impl Library {
     }
 
     pub async fn add_entry(&mut self, metafile: Metafile, output_dir: PathBuf) -> Result<()> {
+        let name = output_dir
+            .file_name()
+            .expect("Missing filename")
+            .to_string_lossy()
+            .to_string();
+
+        log::info!("Adding \"{}\" to library", name);
+
         self.entries.insert(
             metafile.source.id.clone(),
             LibraryEntry {
                 metafile,
-                name: output_dir
-                    .file_name()
-                    .expect("Missing filename")
-                    .to_string_lossy()
-                    .to_string(),
+                name,
                 files: read_files_from_dir(&output_dir).await?,
                 output_dir,
             },
@@ -59,6 +63,7 @@ impl Library {
     }
 
     async fn fetch_library(library_dir: &Path) -> Result<HashMap<String, LibraryEntry>> {
+        info!("Fetching library...");
         let mut library = HashMap::new();
 
         let mut children = read_dir(library_dir).await?;
@@ -86,6 +91,8 @@ impl Library {
                 },
             );
         }
+
+        info!("Found {} entries in library", library.len());
 
         Ok(library)
     }

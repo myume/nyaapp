@@ -100,7 +100,9 @@ impl AppService {
             metadata: self.get_metadata_by_id(id).await.ok(),
         };
 
+        log::info!("Writing metafile for {}", id);
         metafile.write_all(to_vec(&meta)?.as_slice()).await?;
+
         self.library
             .lock()
             .await
@@ -124,6 +126,7 @@ impl AppService {
     }
 
     pub async fn list_torrents(&self) -> Vec<TorrentStats> {
+        log::info!("Listing torrents");
         self.torrent_service.lock().await.list_torrents()
     }
 
@@ -173,6 +176,7 @@ impl AppService {
     }
 
     pub async fn toggle_pause(&self, id: &str) -> Result<()> {
+        log::info!("Pausing download for {}", id);
         self.torrent_service.lock().await.toggle_pause(id).await
     }
 
@@ -199,11 +203,14 @@ impl AppService {
     }
 
     pub async fn remove_download(&self, id: &str) -> Result<()> {
+        log::info!("Removing {} from torrent client", id);
         self.torrent_service.lock().await.remove_torrent(id).await
     }
 
     pub async fn delete(&self, id: &str) -> Result<()> {
+        log::info!("Removing {} from torrent client", id);
         self.torrent_service.lock().await.remove_torrent(id).await?;
+        log::info!("Removing {} from library", id);
         self.library.lock().await.delete(id).await
     }
 }
