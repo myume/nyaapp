@@ -20,7 +20,15 @@ export default function Library() {
   return (
     <div className="flex flex-wrap gap-5">
       {library?.map((entry) => (
-        <LibraryCard key={entry.metafile.source.id} libraryEntry={entry} />
+        <LibraryCard
+          key={entry.metafile.source.id}
+          libraryEntry={entry}
+          onDeleteAction={(id) => {
+            setLibrary((library) =>
+              library?.filter(({ metafile: { source } }) => source.id !== id),
+            );
+          }}
+        />
       ))}
     </div>
   );

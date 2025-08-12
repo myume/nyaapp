@@ -1,13 +1,26 @@
 import { LibraryEntry } from "@/types/LibraryEntry";
+import { invoke } from "@tauri-apps/api/core";
+import { EllipsisVertical, Trash } from "lucide-react";
 import Image from "next/image";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 
 export const LibraryCard = ({
   libraryEntry: {
     name,
-    metafile: { metadata },
+    metafile: {
+      source: { id },
+      metadata,
+    },
   },
+  onDeleteAction,
 }: {
   libraryEntry: LibraryEntry;
+  onDeleteAction: (id: string) => void;
 }) => (
   <div className="flex flex-col items-center border-1 rounded-xl p-4 w-52 gap-2">
     {metadata?.cover && (
@@ -22,6 +35,23 @@ export const LibraryCard = ({
     )}
     <div className="p-2 text-center">
       <h1>{name}</h1>
+    </div>
+    <div className="flex items-end w-full">
+      <DropdownMenu>
+        <DropdownMenuTrigger>
+          <EllipsisVertical />
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem
+            onClick={async () => {
+              await invoke("delete", { id });
+              onDeleteAction(id);
+            }}
+          >
+            <Trash /> Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   </div>
 );
