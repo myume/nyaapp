@@ -31,6 +31,8 @@ mock! {
     fn list_torrents(&self) -> Vec<app_lib::torrent::TorrentStats>;
 
     async fn toggle_pause(&mut self, source_id: &str) -> Result<()>;
+
+    async fn remove_torrent(&mut self, source_id: &str) -> Result<()>;
     }
 }
 
