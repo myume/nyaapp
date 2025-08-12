@@ -36,7 +36,7 @@ export const LibraryCard = ({
     <div className="p-2 text-center">
       <h1>{name}</h1>
     </div>
-    <div className="flex items-end w-full">
+    <div className="flex justify-end w-full">
       <DropdownMenu>
         <DropdownMenuTrigger>
           <EllipsisVertical />
