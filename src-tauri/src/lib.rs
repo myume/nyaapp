@@ -44,6 +44,7 @@ pub fn run() {
             commands::list_library,
             commands::delete,
             commands::remove_download,
+            commands::read_cbz,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

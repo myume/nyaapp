@@ -1,5 +1,9 @@
-use std::time::{Duration, Instant};
+use std::{
+    path::PathBuf,
+    time::{Duration, Instant},
+};
 
+use base64::{engine::general_purpose, Engine as _};
 use tauri::{Emitter, State};
 use tokio::sync::Mutex;
 
@@ -167,4 +171,28 @@ pub async fn delete(
         .delete(&id)
         .await
         .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn read_cbz(path: String) -> Result<Vec<String>, String> {
+    log::info!("Attempting to read CBZ file at: {}", path);
+    let data = match crate::utils::read_cbz(&PathBuf::from(&path)).await {
+        Ok(data) => data,
+        Err(e) => {
+            log::error!("Error reading CBZ file at {}: {}", path, e);
+            return Err(e.to_string());
+        }
+    };
+    log::info!(
+        "Successfully read {} files from CBZ at: {}",
+        data.len(),
+        path
+    );
+
+    let encoded_data = data
+        .into_iter()
+        .map(|d| general_purpose::STANDARD.encode(d))
+        .collect();
+
+    Ok(encoded_data)
 }

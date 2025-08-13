@@ -8,8 +8,10 @@ export const LibraryDetails = ({
     files,
     metafile: { metadata },
   },
+  setFileIndex,
 }: {
   libraryEntry: LibraryEntry;
+  setFileIndex: (fileIndex: number) => void;
 }) => {
   return (
     <div className="space-y-5 p-2">
@@ -45,8 +47,10 @@ export const LibraryDetails = ({
       <div className="space-y-5">
         <h2 className="text-2xl font-bold mb-5">Files</h2>
         <ul className="space-y-2 max-h-[50dvh] overflow-auto">
-          {files.map((file) => (
-            <li key={file}>{file}</li>
+          {files.map((file, i) => (
+            <li onClick={() => setFileIndex(i)} key={file}>
+              {file}
+            </li>
           ))}
         </ul>
       </div>

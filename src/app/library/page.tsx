@@ -2,6 +2,7 @@
 
 import { LibraryCard } from "@/components/LibraryCard";
 import { LibraryDetails } from "@/components/LibraryDetails";
+import { Reader } from "@/components/Reader";
 import { Button } from "@/components/ui/button";
 import { LibraryEntry } from "@/types/LibraryEntry";
 import { invoke } from "@tauri-apps/api/core";
@@ -9,7 +10,8 @@ import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 
 export default function Library() {
-  const [selected, setSelected] = useState<LibraryEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
+  const [fileIndex, setFileIndex] = useState<number | null>();
   const [library, setLibrary] = useState<LibraryEntry[]>();
 
   useEffect(() => {
@@ -23,17 +25,33 @@ export default function Library() {
 
   return (
     <div className="flex flex-wrap gap-5">
-      {selected ? (
-        <div className="space-y-5">
-          <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setSelected(null)}>
-              <ArrowLeft />
-              Back
-            </Button>
-            <h1>{selected.name}</h1>
+      {selectedEntry ? (
+        fileIndex ? (
+          <div>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => setFileIndex(null)}>
+                <ArrowLeft />
+                Back
+              </Button>
+            </div>
+
+            <Reader fileIndex={fileIndex} libraryEntry={selectedEntry} />
           </div>
-          <LibraryDetails libraryEntry={selected} />
-        </div>
+        ) : (
+          <div className="space-y-5">
+            <div className="flex items-center gap-3">
+              <Button variant="outline" onClick={() => setSelectedEntry(null)}>
+                <ArrowLeft />
+                Back
+              </Button>
+              <h1>{selectedEntry.name}</h1>
+            </div>
+            <LibraryDetails
+              libraryEntry={selectedEntry}
+              setFileIndex={setFileIndex}
+            />
+          </div>
+        )
       ) : (
         library?.map((entry) => (
           <LibraryCard
@@ -44,7 +62,7 @@ export default function Library() {
                 library?.filter(({ metafile: { source } }) => source.id !== id),
               );
             }}
-            setSelectedAction={setSelected}
+            setSelectedAction={setSelectedEntry}
           />
         ))
       )}
