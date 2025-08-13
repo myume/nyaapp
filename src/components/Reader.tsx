@@ -22,7 +22,7 @@ export const Reader = ({
   }, [fileIndex]);
 
   return (
-    <div className="grid gap-y-2">
+    <div className="grid">
       {pages.map((page, i) => (
         <Image
           src={`data:image/*;base64,${page}`}

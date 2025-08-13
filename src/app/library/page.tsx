@@ -11,7 +11,7 @@ import { useEffect, useState } from "react";
 
 export default function Library() {
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
-  const [fileIndex, setFileIndex] = useState<number | null>();
+  const [fileIndex, setFileIndex] = useState<number | null>(null);
   const [library, setLibrary] = useState<LibraryEntry[]>();
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function Library() {
   return (
     <div className="flex flex-wrap gap-5">
       {selectedEntry ? (
-        fileIndex ? (
+        fileIndex !== null ? (
           <div className="w-full">
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={() => setFileIndex(null)}>
