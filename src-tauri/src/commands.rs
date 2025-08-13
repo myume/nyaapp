@@ -174,7 +174,7 @@ pub async fn delete(
 }
 
 #[tauri::command]
-pub async fn read_cbz(path: String) -> Result<Vec<String>, String> {
+pub async fn read_cbz(app_handle: tauri::AppHandle, path: String) -> Result<(), String> {
     log::info!("Attempting to read CBZ file at: {}", path);
     let data = match crate::utils::read_cbz(&PathBuf::from(&path)).await {
         Ok(data) => data,
@@ -191,8 +191,13 @@ pub async fn read_cbz(path: String) -> Result<Vec<String>, String> {
 
     let encoded_data = data
         .into_iter()
-        .map(|d| general_purpose::STANDARD.encode(d))
-        .collect();
+        .map(|d| general_purpose::STANDARD.encode(d));
 
-    Ok(encoded_data)
+    for page in encoded_data {
+        app_handle
+            .emit("page-read", page)
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
 }
