@@ -12,6 +12,14 @@ use crate::{
     library::LibraryEntry,
     torrent::TorrentStats,
 };
+use image::{self, GenericImageView};
+
+#[derive(serde::Serialize, Clone)]
+struct Page {
+    data: String,
+    width: u32,
+    height: u32,
+}
 
 #[tauri::command]
 pub async fn download(
@@ -189,11 +197,23 @@ pub async fn read_cbz(app_handle: tauri::AppHandle, path: String) -> Result<(), 
         path
     );
 
-    let encoded_data = data
-        .into_iter()
-        .map(|d| general_purpose::STANDARD.encode(d));
+    for page_data in data {
+        let image = match image::load_from_memory(&page_data) {
+            Ok(img) => img,
+            Err(e) => {
+                log::error!("Failed to decode image: {}", e);
+                continue;
+            }
+        };
+        let (width, height) = image.dimensions();
+        let encoded_page = general_purpose::STANDARD.encode(&page_data);
 
-    for page in encoded_data {
+        let page = Page {
+            data: encoded_page,
+            width,
+            height,
+        };
+
         app_handle
             .emit("page-read", page)
             .map_err(|e| e.to_string())?;
