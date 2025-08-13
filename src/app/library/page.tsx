@@ -27,7 +27,7 @@ export default function Library() {
     <div className="flex flex-wrap gap-5">
       {selectedEntry ? (
         fileIndex ? (
-          <div>
+          <div className="w-full">
             <div className="flex items-center gap-3">
               <Button variant="outline" onClick={() => setFileIndex(null)}>
                 <ArrowLeft />

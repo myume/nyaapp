@@ -18,9 +18,9 @@ export const LibraryDetails = ({
       <div className="flex flex-col sm:flex-row justify-center gap-5 items-start">
         {metadata?.cover && (
           <Image
-            src={metadata?.cover}
+            src={metadata?.cover_raw ?? metadata?.cover}
             alt="Cover Image"
-            className="rounded sm:w-full m-auto sm:m-0"
+            className="rounded m-auto sm:m-0"
             style={{ objectFit: "contain" }}
             width={300}
             height={300}

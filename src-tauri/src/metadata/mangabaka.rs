@@ -22,6 +22,7 @@ pub struct MangabakaMetadata {
     pub id: i64,
     pub title: String,
     pub cover: Option<String>,
+    pub cover_raw: Option<String>,
     pub authors: Option<String>,
     pub artists: Option<String>,
     pub description: Option<String>,
@@ -38,6 +39,7 @@ impl MangabakaMetadata {
             id: self.id,
             title: self.title,
             cover: self.cover,
+            cover_raw: self.cover_raw,
             authors: self.authors.map(|authors| {
                 serde_json::from_str(&authors)
                     .expect(&format!("authors to be a json array - found: {}", authors))
@@ -157,6 +159,7 @@ impl MetadataProvider for Mangabaka {
                 series.id as "id!",
                 series.title as "title!",
                 cover_default as "cover",
+                cover_raw as "cover_raw",
                 authors as "authors",
                 artists as "artists",
                 description as "description",

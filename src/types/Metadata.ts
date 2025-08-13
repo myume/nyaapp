@@ -2,6 +2,7 @@ export type Metadata = {
   id: number;
   title: string;
   cover?: string;
+  cover_raw?: string;
   authors?: string[];
   artists?: string[];
   description?: string;

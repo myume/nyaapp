@@ -33,7 +33,7 @@ export const LibraryCard = ({
     >
       {metadata?.cover && (
         <Image
-          src={metadata?.cover}
+          src={metadata.cover_raw ?? metadata?.cover}
           alt="Cover Image"
           className="rounded"
           style={{ objectFit: "contain" }}

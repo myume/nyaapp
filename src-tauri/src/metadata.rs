@@ -9,6 +9,7 @@ pub struct Metadata {
     pub id: i64,
     pub title: String,
     pub cover: Option<String>,
+    pub cover_raw: Option<String>,
     pub authors: Option<Vec<String>>,
     pub artists: Option<Vec<String>>,
     pub description: Option<String>,
