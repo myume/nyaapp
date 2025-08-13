@@ -48,7 +48,11 @@ export const LibraryDetails = ({
         <h2 className="text-2xl font-bold mb-5">Files</h2>
         <ul className="space-y-2 max-h-[50dvh] overflow-auto">
           {files.map((file, i) => (
-            <li onClick={() => setFileIndex(i)} key={file}>
+            <li
+              className="hover:bg-muted/80 p-2 rounded w-fit transition-colors duration-200 hover:cursor-pointer"
+              onClick={() => setFileIndex(i)}
+              key={file}
+            >
               {file}
             </li>
           ))}
