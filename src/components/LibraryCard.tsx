@@ -27,26 +27,28 @@ export const LibraryCard = ({
   } = libraryEntry;
 
   return (
-    <div
-      className="flex flex-col items-center border-1 rounded-xl p-4 w-52 gap-2"
-      onClick={() => setSelectedAction(libraryEntry)}
-    >
-      {metadata?.cover && (
-        <Image
-          src={metadata.cover_raw ?? metadata?.cover}
-          alt="Cover Image"
-          className="rounded"
-          style={{ objectFit: "contain" }}
-          width={200}
-          height={200}
-        />
-      )}
-      <div className="p-2 text-center">
-        <h1>{name}</h1>
+    <div className="flex flex-col items-center justify-between border-1 rounded-xl p-4 w-52 gap-2 hover:bg-muted/80 transition-colors duration-200">
+      <div
+        className="hover:cursor-pointer"
+        onClick={() => setSelectedAction(libraryEntry)}
+      >
+        {metadata?.cover && (
+          <Image
+            src={metadata.cover_raw ?? metadata?.cover}
+            alt="Cover Image"
+            className="rounded"
+            style={{ objectFit: "contain" }}
+            width={200}
+            height={200}
+          />
+        )}
+        <div className="p-2 mt-2 text-center">
+          <h1>{name}</h1>
+        </div>
       </div>
       <div className="flex justify-end w-full">
         <DropdownMenu>
-          <DropdownMenuTrigger>
+          <DropdownMenuTrigger className="hover:bg-background hover:cursor-pointer p-1 rounded-full aspect-square transition-colors duration-200">
             <EllipsisVertical />
           </DropdownMenuTrigger>
           <DropdownMenuContent>
