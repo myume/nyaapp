@@ -6,7 +6,7 @@ export default function Layout({
   children: React.ReactNode;
 }>) {
   return (
-    <div className="pb-4">
+    <div className="px-5 py-2">
       <PageHeader title={"Library"} />
       {children}
     </div>

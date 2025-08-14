@@ -59,7 +59,7 @@ export const Reader = ({
   }, [fileIndex, libraryEntry]);
 
   return (
-    <div ref={parentRef} className="h-[calc(100vh-4rem)] overflow-auto">
+    <div ref={parentRef} className="h-screen overflow-auto">
       <div
         style={{
           height: `${rowVirtualizer.getTotalSize()}px`,

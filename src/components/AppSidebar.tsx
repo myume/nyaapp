@@ -1,4 +1,4 @@
-import { Library, Search, Download } from "lucide-react";
+import { Library, Search, Download, BookOpen } from "lucide-react";
 
 import {
   Sidebar,
@@ -23,6 +23,11 @@ const items = [
     title: "Browse",
     url: "/browse",
     icon: Search,
+  },
+  {
+    title: "Reader",
+    url: "/reader",
+    icon: BookOpen,
   },
   {
     title: "Downloads",

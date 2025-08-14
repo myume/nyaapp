@@ -2,17 +2,19 @@
 
 import { LibraryCard } from "@/components/LibraryCard";
 import { LibraryDetails } from "@/components/LibraryDetails";
-import { Reader } from "@/components/Reader";
+import { useReader } from "@/components/providers/ReaderProvider";
 import { Button } from "@/components/ui/button";
 import { LibraryEntry } from "@/types/LibraryEntry";
 import { invoke } from "@tauri-apps/api/core";
 import { ArrowLeft } from "lucide-react";
+import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function Library() {
   const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
   const [fileIndex, setFileIndex] = useState<number | null>(null);
   const [library, setLibrary] = useState<LibraryEntry[]>();
+  const { setReaderContext } = useReader();
 
   useEffect(() => {
     const fetchLibrary = async () => {
@@ -23,35 +25,34 @@ export default function Library() {
     fetchLibrary();
   }, []);
 
+  useEffect(() => {
+    if (fileIndex === null || selectedEntry === null) return;
+
+    setReaderContext((context) => ({
+      ...context,
+      fileIndex,
+      libraryEntry: selectedEntry,
+      pages: undefined,
+    }));
+    redirect("/reader");
+  }, [fileIndex, selectedEntry]);
+
   return (
     <div className="flex flex-wrap gap-5">
       {selectedEntry ? (
-        fileIndex !== null ? (
-          <div className="w-full">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => setFileIndex(null)}>
-                <ArrowLeft />
-                Back
-              </Button>
-            </div>
-
-            <Reader fileIndex={fileIndex} libraryEntry={selectedEntry} />
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <Button variant="outline" onClick={() => setSelectedEntry(null)}>
+              <ArrowLeft />
+              Back
+            </Button>
+            <h1>{selectedEntry.name}</h1>
           </div>
-        ) : (
-          <div className="space-y-5">
-            <div className="flex items-center gap-3">
-              <Button variant="outline" onClick={() => setSelectedEntry(null)}>
-                <ArrowLeft />
-                Back
-              </Button>
-              <h1>{selectedEntry.name}</h1>
-            </div>
-            <LibraryDetails
-              libraryEntry={selectedEntry}
-              setFileIndex={setFileIndex}
-            />
-          </div>
-        )
+          <LibraryDetails
+            libraryEntry={selectedEntry}
+            setFileIndex={setFileIndex}
+          />
+        </div>
       ) : (
         library?.map((entry) => (
           <LibraryCard

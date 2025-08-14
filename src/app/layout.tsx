@@ -6,6 +6,7 @@ import { AppSidebar } from "@/components/AppSidebar";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { DownloadsProvider } from "@/components/providers/DownloadsProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { ReaderProvider } from "@/components/providers/ReaderProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,11 +40,13 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <DownloadsProvider>
-            <SidebarProvider>
-              <AppSidebar />
-              <main className="px-5 py-2 w-full h-full">{children}</main>
-              <Toaster />
-            </SidebarProvider>
+            <ReaderProvider>
+              <SidebarProvider>
+                <AppSidebar />
+                <main className="w-full h-full">{children}</main>
+                <Toaster />
+              </SidebarProvider>
+            </ReaderProvider>
           </DownloadsProvider>
         </ThemeProvider>
       </body>
