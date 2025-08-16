@@ -123,13 +123,18 @@ impl Library {
             .get(file_num)
             .context(format!("No file at index {}", file_num))?;
 
+        if Some(updated_page) == entry.metafile.reading_progress.get(filename).cloned() {
+            log::info!("Reading progress for: {} is up to date", filename,);
+            return Ok(());
+        }
+
         entry
             .metafile
             .reading_progress
             .insert(filename.clone(), updated_page);
 
         log::info!(
-            "Updating reading progress for: {} to {}",
+            "Updating reading progress for: {} to page {}",
             filename,
             updated_page,
         );

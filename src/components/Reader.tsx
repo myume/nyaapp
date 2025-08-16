@@ -1,3 +1,4 @@
+import { info } from "@tauri-apps/plugin-log";
 import { invoke } from "@tauri-apps/api/core";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
@@ -33,6 +34,7 @@ export const Reader = () => {
 
   useEffect(() => {
     const lastReadPage = libraryEntry.metafile.reading_progress[filename] ?? 0;
+    info("Restoring reading progress");
     pagesRef.current[lastReadPage]?.scrollIntoView({ behavior: "instant" });
   }, [numPages, filename, libraryEntry.metafile.reading_progress]);
 
