@@ -30,7 +30,8 @@ export const Reader = ({
           src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
           alt={`Page ${i + 1}`}
           className="w-full"
-          height={1500}
+          style={{ objectFit: "contain" }}
+          height={500}
           width={500}
           quality={100}
         />

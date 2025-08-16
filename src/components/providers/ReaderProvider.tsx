@@ -1,7 +1,6 @@
 "use client";
 
 import { LibraryEntry } from "@/types/LibraryEntry";
-import { Page } from "@/types/Page";
 import {
   createContext,
   Dispatch,
@@ -14,7 +13,6 @@ import {
 export type ReaderContext = {
   fileIndex?: number;
   libraryEntry?: LibraryEntry;
-  pages?: Page[];
 };
 
 type ReaderContextType = {

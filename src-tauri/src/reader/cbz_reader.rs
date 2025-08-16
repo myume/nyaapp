@@ -21,6 +21,7 @@ impl Reader for CBZReader {
     fn load(&mut self, path: &Path) -> Result<usize> {
         let key = path.to_string_lossy().to_string();
         if let Some(pages) = self.books.get(&key) {
+            log::info!("Cache hit: {} pages found in cache", pages.len());
             return Ok(pages.len());
         }
 
