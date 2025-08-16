@@ -1,17 +1,16 @@
 use anyhow::{Context, Result};
 use librqbit::{Session, SessionOptions, SessionPersistenceConfig};
-use serde::{Deserialize, Serialize};
-use serde_json::to_vec;
+use serde::Serialize;
 use std::{path::PathBuf, sync::Arc, vec};
 use tokio::{
-    fs::{create_dir, File},
-    io::AsyncWriteExt,
+    fs::create_dir,
     sync::{watch::Receiver, Mutex},
 };
 
 use crate::{
     library::{Library, LibraryEntry},
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
+    metafile::Metafile,
     reader::{cbz_reader::CBZReader, Reader},
     source::{nyaa::Nyaa, Category, MediaInfo, PaginationInfo, Source, SourceMeta},
     torrent::{rqbit_service::RqbitService, TorrentService, TorrentStats},
@@ -36,12 +35,6 @@ pub struct SearchResult {
 pub struct SearchResponse {
     search_results: Vec<SearchResult>,
     pagination: PaginationInfo,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
-pub struct Metafile {
-    pub source: SourceMeta,
-    pub metadata: Option<Metadata>,
 }
 
 impl AppService {
@@ -94,22 +87,21 @@ impl AppService {
     pub async fn download(&self, id: &str) -> Result<()> {
         let library_dir = self.base_dir.join("library");
         let output_dir = self.source.download(id, &library_dir).await?;
-        let mut metafile = File::create(output_dir.join(".meta")).await?;
-        let meta = Metafile {
-            source: SourceMeta {
+        let metafile = Metafile::new(
+            SourceMeta {
                 id: id.to_owned(),
                 provider: self.source.get_variant(),
             },
-            metadata: self.get_metadata_by_id(id).await.ok(),
-        };
+            self.get_metadata_by_id(id).await.ok(),
+        );
 
         log::info!("Writing metafile for {}", id);
-        metafile.write_all(to_vec(&meta)?.as_slice()).await?;
+        metafile.write(&output_dir).await?;
 
         self.library
             .lock()
             .await
-            .add_entry(meta, output_dir)
+            .add_entry(metafile, output_dir)
             .await?;
 
         Ok(())
@@ -259,5 +251,18 @@ impl AppService {
             .await
             .get(&entry.output_dir.join(filename), page_num)
             .context(format!("Failed to find page {} for {}", page_num, filename))
+    }
+
+    pub async fn update_reading_progress(
+        &mut self,
+        id: &str,
+        file_num: usize,
+        updated_page: usize,
+    ) -> Result<()> {
+        self.library
+            .lock()
+            .await
+            .update_reading_progress(id, file_num, updated_page)
+            .await
     }
 }

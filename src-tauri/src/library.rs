@@ -6,10 +6,9 @@ use std::{
 use anyhow::{Context, Result};
 use log::info;
 use serde::Serialize;
-use serde_json::from_str;
-use tokio::fs::{read_dir, read_to_string, remove_dir_all};
+use tokio::fs::{read_dir, remove_dir_all};
 
-use crate::{app_service::Metafile, utils::read_files_from_dir};
+use crate::{metafile::Metafile, utils::read_files_from_dir};
 
 #[derive(Serialize, Clone)]
 pub struct LibraryEntry {
@@ -72,8 +71,7 @@ impl Library {
         while let Ok(Some(dir)) = children.next_entry().await {
             info!("Found: {}", dir.path().display());
 
-            let metafile_content = read_to_string(dir.path().join(".meta")).await?;
-            let metafile: Metafile = from_str(&metafile_content)?;
+            let metafile = Metafile::read(&dir.path()).await?;
 
             let mut files = read_files_from_dir(&dir.path()).await?;
             files.sort();
@@ -105,6 +103,38 @@ impl Library {
             .context(format!("Missing library entry for {}", id))?;
 
         remove_dir_all(&entry.output_dir).await?;
+
+        Ok(())
+    }
+
+    pub async fn update_reading_progress(
+        &mut self,
+        id: &str,
+        file_num: usize,
+        updated_page: usize,
+    ) -> Result<()> {
+        let entry = self
+            .entries
+            .get_mut(id)
+            .context(format!("Missing library entry for {}", id))?;
+
+        let filename = entry
+            .files
+            .get(file_num)
+            .context(format!("No file at index {}", file_num))?;
+
+        entry
+            .metafile
+            .reading_progress
+            .insert(filename.clone(), updated_page);
+
+        log::info!(
+            "Updating reading progres for: {} to {}",
+            filename,
+            updated_page,
+        );
+
+        entry.metafile.write(&entry.output_dir).await?;
 
         Ok(())
     }

@@ -14,7 +14,7 @@ export const Reader = ({
   const [currentPage, setCurrentPage] = useState(0);
   const pagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const observer = useRef<IntersectionObserver | null>(null);
-  const [lastReadPage] = useState(5);
+  const filename = libraryEntry.files[fileIndex];
 
   useEffect(() => {
     (async () => {
@@ -27,8 +27,9 @@ export const Reader = ({
   }, [fileIndex, libraryEntry]);
 
   useEffect(() => {
+    const lastReadPage = libraryEntry.metafile.reading_progress[filename] ?? 0;
     pagesRef.current[lastReadPage]?.scrollIntoView({ behavior: "instant" });
-  }, [numPages, lastReadPage]);
+  }, [numPages, filename, libraryEntry.metafile.reading_progress]);
 
   useEffect(() => {
     observer.current = new IntersectionObserver(
@@ -58,6 +59,16 @@ export const Reader = ({
     };
   }, [numPages]);
 
+  useEffect(() => {
+    (async () => {
+      await invoke("update_reading_progress", {
+        id: libraryEntry.metafile.source.id,
+        fileNum: fileIndex,
+        updatedPage: currentPage,
+      });
+    })();
+  }, [currentPage, fileIndex, libraryEntry.metafile.source.id]);
+
   return (
     <div>
       <div className="grid">
@@ -82,7 +93,7 @@ export const Reader = ({
         <div className="fixed bottom-2 right-2 text-muted-foreground text-[0.7rem]">
           {currentPage + 1} / {numPages}
         </div>
-      )}{" "}
+      )}
     </div>
   );
 };

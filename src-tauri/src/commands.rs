@@ -184,3 +184,18 @@ pub async fn load_cbz(
 
     Ok(num_pages)
 }
+
+#[tauri::command]
+pub async fn update_reading_progress(
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+    file_num: usize,
+    updated_page: usize,
+) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .update_reading_progress(&id, file_num, updated_page)
+        .await
+        .map_err(|e| e.to_string())
+}

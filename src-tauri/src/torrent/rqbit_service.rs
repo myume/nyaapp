@@ -20,7 +20,7 @@ use tokio::{
 };
 
 use crate::{
-    app_service::Metafile,
+    metafile::Metafile,
     torrent::{TorrentService, TorrentStats},
     utils::download_file_from_url,
 };
@@ -86,12 +86,9 @@ impl RqbitService {
                 from_str(&content).expect("session.json to be a serialized torrent");
 
             for (id, torrent) in serialized_torrents.torrents.iter() {
-                let content = read_to_string(torrent.output_folder.join(".meta"))
+                let metafile = Metafile::read(&torrent.output_folder)
                     .await
-                    .expect(".meta file to be present");
-
-                let metafile: Metafile =
-                    from_str(&content).expect(".meta to follow format of Metafile");
+                    .expect(".metafile to be valid");
 
                 id_translation.insert(id.to_owned(), metafile.source.id);
             }

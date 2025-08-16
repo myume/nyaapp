@@ -7,6 +7,7 @@ pub mod app_service;
 mod commands;
 pub mod library;
 pub mod metadata;
+pub mod metafile;
 pub mod reader;
 pub mod source;
 pub mod torrent;
@@ -66,6 +67,7 @@ pub fn run() {
             commands::delete,
             commands::remove_download,
             commands::load_cbz,
+            commands::update_reading_progress,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
