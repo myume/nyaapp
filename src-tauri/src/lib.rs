@@ -1,12 +1,13 @@
-use tauri::Manager;
+use tauri::{http::Response, Manager};
 use tokio::sync::Mutex;
 
-use crate::app_service::AppService;
+use crate::{app_service::AppService, utils::parse_pages_uri};
 
 pub mod app_service;
 mod commands;
 pub mod library;
 pub mod metadata;
+pub mod reader;
 pub mod source;
 pub mod torrent;
 pub mod utils;
@@ -36,6 +37,26 @@ pub fn run() {
             log::info!("Setup complete");
             Ok(())
         })
+        .register_uri_scheme_protocol("pages", |app, request| {
+            match parse_pages_uri(request.uri().path()) {
+                Ok((id, file_num, page_num)) => {
+                    let state = app.app_handle().state::<Mutex<AppService>>();
+                    let content = tauri::async_runtime::block_on(async {
+                        state.lock().await.get_page(&id, file_num, page_num).await
+                    })
+                    .unwrap();
+
+                    Response::builder().status(200).body(content).unwrap()
+                }
+                Err(e) => {
+                    log::error!("{e}");
+                    Response::builder()
+                        .status(400)
+                        .body(e.into_bytes())
+                        .unwrap()
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             commands::download,
             commands::search,
@@ -44,7 +65,7 @@ pub fn run() {
             commands::list_library,
             commands::delete,
             commands::remove_download,
-            commands::read_cbz,
+            commands::load_cbz,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

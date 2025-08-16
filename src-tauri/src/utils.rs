@@ -1,4 +1,4 @@
-use std::{io::Read, path::Path};
+use std::path::Path;
 
 use anyhow::Result;
 use flate2::read::GzDecoder;
@@ -50,17 +50,20 @@ pub async fn read_files_from_dir(path: &Path) -> Result<Vec<String>> {
     Ok(files)
 }
 
-pub async fn read_cbz(path: &Path) -> Result<Vec<Vec<u8>>> {
-    let file = std::fs::File::open(path)?;
-    let mut archive = zip::ZipArchive::new(file)?;
+pub fn parse_pages_uri(uri: &str) -> Result<(String, usize, usize), String> {
+    let path = uri.strip_prefix("/").ok_or("Invalid URI")?;
 
-    let mut files = Vec::new();
-    for i in 0..archive.len() {
-        let mut file = archive.by_index(i).unwrap();
-        let mut content = Vec::new();
-        file.read_to_end(&mut content)?;
+    let parts: Vec<&str> = path.split('/').collect();
 
-        files.push(content);
+    if parts.len() < 3 {
+        return Err(
+            "URI must contain at least library id, file number, and page number".to_string(),
+        );
     }
-    Ok(files)
+
+    let id = parts[0].to_owned();
+    let file_num = parts[1].parse().expect("File num must be a valid number");
+    let page_num = parts[2].parse().expect("Page num must be a valid number");
+
+    Ok((id, file_num, page_num))
 }

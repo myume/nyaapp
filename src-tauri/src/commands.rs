@@ -1,9 +1,5 @@
-use std::{
-    path::PathBuf,
-    time::{Duration, Instant},
-};
+use std::time::{Duration, Instant};
 
-use base64::{engine::general_purpose, Engine as _};
 use tauri::{Emitter, State};
 use tokio::sync::Mutex;
 
@@ -12,14 +8,6 @@ use crate::{
     library::LibraryEntry,
     torrent::TorrentStats,
 };
-use image::{self, GenericImageView};
-
-#[derive(serde::Serialize, Clone)]
-struct Page {
-    data: String,
-    width: u32,
-    height: u32,
-}
 
 #[tauri::command]
 pub async fn download(
@@ -182,42 +170,17 @@ pub async fn delete(
 }
 
 #[tauri::command]
-pub async fn read_cbz(app_handle: tauri::AppHandle, path: String) -> Result<(), String> {
-    log::info!("Attempting to read CBZ file at: {}", path);
-    let data = match crate::utils::read_cbz(&PathBuf::from(&path)).await {
-        Ok(data) => data,
-        Err(e) => {
-            log::error!("Error reading CBZ file at {}: {}", path, e);
-            return Err(e.to_string());
-        }
-    };
-    log::info!(
-        "Successfully read {} files from CBZ at: {}",
-        data.len(),
-        path
-    );
+pub async fn load_cbz(
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+    file_num: usize,
+) -> Result<usize, String> {
+    let num_pages = state
+        .lock()
+        .await
+        .load_cbz(&id, file_num)
+        .await
+        .map_err(|e| e.to_string())?;
 
-    for page_data in data {
-        let image = match image::load_from_memory(&page_data) {
-            Ok(img) => img,
-            Err(e) => {
-                log::error!("Failed to decode image: {}", e);
-                continue;
-            }
-        };
-        let (width, height) = image.dimensions();
-        let encoded_page = general_purpose::STANDARD.encode(&page_data);
-
-        let page = Page {
-            data: encoded_page,
-            width,
-            height,
-        };
-
-        app_handle
-            .emit("page-read", page)
-            .map_err(|e| e.to_string())?;
-    }
-
-    Ok(())
+    Ok(num_pages)
 }

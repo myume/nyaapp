@@ -12,6 +12,7 @@ use tokio::{
 use crate::{
     library::{Library, LibraryEntry},
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
+    reader::{cbz_reader::CBZReader, Reader},
     source::{nyaa::Nyaa, Category, MediaInfo, PaginationInfo, Source, SourceMeta},
     torrent::{rqbit_service::RqbitService, TorrentService, TorrentStats},
 };
@@ -22,6 +23,7 @@ pub struct AppService {
     pub torrent_service: Arc<Mutex<dyn TorrentService>>,
     pub mangabaka_provider: Arc<Mangabaka>,
     library: Arc<Mutex<Library>>,
+    cbz_reader: Arc<Mutex<CBZReader>>,
 }
 
 #[derive(Serialize)]
@@ -77,6 +79,7 @@ impl AppService {
             base_dir: app_data_dir,
             torrent_service,
             library: Arc::new(Mutex::new(library)),
+            cbz_reader: Arc::new(Mutex::new(CBZReader::new())),
         })
     }
 
@@ -212,5 +215,49 @@ impl AppService {
         self.torrent_service.lock().await.remove_torrent(id).await?;
         log::info!("Removing {} from library", id);
         self.library.lock().await.delete(id).await
+    }
+
+    pub async fn load_cbz(&self, id: &str, file_num: usize) -> Result<usize> {
+        let entry = self
+            .library
+            .lock()
+            .await
+            .get_entry(id)
+            .await
+            .context(format!("Failed to find entry with id {} in library", id))?;
+
+        let filename = entry.files.get(file_num).context("File not found")?;
+
+        log::info!("Loading files from {}", filename);
+
+        let num_pages = self
+            .cbz_reader
+            .lock()
+            .await
+            .load(&entry.output_dir.join(filename))?;
+
+        log::info!("Loaded {} pages from {}", num_pages, filename);
+
+        Ok(num_pages)
+    }
+
+    pub async fn get_page(&self, id: &str, file_num: usize, page_num: usize) -> Result<Vec<u8>> {
+        let entry = self
+            .library
+            .lock()
+            .await
+            .get_entry(id)
+            .await
+            .context(format!("Failed to find entry with id {} in library", id))?;
+
+        let filename = entry.files.get(file_num).context("File not found")?;
+
+        log::info!("Fetching page {} from {}", page_num, filename);
+
+        self.cbz_reader
+            .lock()
+            .await
+            .get(&entry.output_dir.join(filename), page_num)
+            .context(format!("Failed to find page {} for {}", page_num, filename))
     }
 }

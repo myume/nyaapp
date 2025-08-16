@@ -55,8 +55,9 @@ impl Library {
 
         Ok(())
     }
-
-    pub async fn delete_entry(&mut self) {}
+    pub async fn get_entry(&mut self, id: &str) -> Option<LibraryEntry> {
+        self.entries.get(id).cloned()
+    }
 
     pub fn get_entries(&self) -> Vec<LibraryEntry> {
         self.entries.values().cloned().collect()
