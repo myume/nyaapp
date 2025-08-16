@@ -40,7 +40,7 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     (async () => {
-      let results = await invoke<DownloadInfo[]>("list_torrents");
+      const results = await invoke<DownloadInfo[]>("list_torrents");
       setDownloads(
         results.reduce((acc, curr) => {
           return { ...acc, [curr.id]: curr };
@@ -81,6 +81,7 @@ export function DownloadsProvider({ children }: { children: ReactNode }) {
 
     listen<string>("download-removed", ({ payload: id }) => {
       setDownloads((downloads) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { [id]: _, ...rest } = downloads;
         return rest;
       });

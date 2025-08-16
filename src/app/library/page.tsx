@@ -32,10 +32,9 @@ export default function Library() {
       ...context,
       fileIndex,
       libraryEntry: selectedEntry,
-      pages: undefined,
     }));
     redirect("/reader");
-  }, [fileIndex, selectedEntry]);
+  }, [fileIndex, selectedEntry, setReaderContext]);
 
   return (
     <div className="flex flex-wrap gap-5">
