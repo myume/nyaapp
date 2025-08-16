@@ -1,20 +1,24 @@
-import { LibraryEntry } from "@/types/LibraryEntry";
 import { invoke } from "@tauri-apps/api/core";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { useReader } from "./providers/ReaderProvider";
 
-export const Reader = ({
-  libraryEntry,
-  fileIndex,
-}: {
-  libraryEntry: LibraryEntry;
-  fileIndex: number;
-}) => {
+export const Reader = () => {
+  let {
+    readerContext: { libraryEntry, fileIndex },
+    setReaderContext,
+  } = useReader();
+  libraryEntry = libraryEntry!;
+  fileIndex = fileIndex!;
+
+  const filename = libraryEntry.files[fileIndex];
+
   const [numPages, setNumPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(0);
+  const [currentPage, setCurrentPage] = useState(
+    libraryEntry.metafile.reading_progress[filename] ?? 0,
+  );
   const pagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const observer = useRef<IntersectionObserver | null>(null);
-  const filename = libraryEntry.files[fileIndex];
 
   useEffect(() => {
     (async () => {
@@ -67,7 +71,15 @@ export const Reader = ({
         updatedPage: currentPage,
       });
     })();
-  }, [currentPage, fileIndex, libraryEntry.metafile.source.id]);
+    return () => {
+      setReaderContext((context) => {
+        const updatedContext = { ...context };
+        updatedContext.libraryEntry!.metafile.reading_progress[filename] =
+          currentPage;
+        return updatedContext;
+      });
+    };
+  }, [currentPage, fileIndex, libraryEntry.metafile.source.id, filename]);
 
   return (
     <div>

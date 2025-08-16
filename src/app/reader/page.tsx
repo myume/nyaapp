@@ -41,10 +41,5 @@ export default function ReaderPage() {
     );
   }
 
-  return (
-    <Reader
-      fileIndex={readerContext.fileIndex}
-      libraryEntry={readerContext.libraryEntry}
-    />
-  );
+  return <Reader />;
 }
