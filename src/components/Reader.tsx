@@ -19,6 +19,7 @@ export const Reader = () => {
   );
   const pagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const observer = useRef<IntersectionObserver | null>(null);
+  let readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -64,13 +65,17 @@ export const Reader = () => {
   }, [numPages]);
 
   useEffect(() => {
-    (async () => {
+    if (readingProgressTimeout.current)
+      clearTimeout(readingProgressTimeout.current);
+
+    readingProgressTimeout.current = setTimeout(async () => {
       await invoke("update_reading_progress", {
         id: libraryEntry.metafile.source.id,
         fileNum: fileIndex,
         updatedPage: currentPage,
       });
-    })();
+    }, 500);
+
     return () => {
       setReaderContext((context) => {
         const updatedContext = { ...context };

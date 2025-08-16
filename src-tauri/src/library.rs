@@ -129,7 +129,7 @@ impl Library {
             .insert(filename.clone(), updated_page);
 
         log::info!(
-            "Updating reading progres for: {} to {}",
+            "Updating reading progress for: {} to {}",
             filename,
             updated_page,
         );
