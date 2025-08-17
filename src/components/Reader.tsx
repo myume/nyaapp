@@ -5,10 +5,8 @@ import { useEffect, useRef, useState } from "react";
 import { useReader } from "./providers/ReaderProvider";
 
 export const Reader = () => {
-  let {
-    readerContext: { libraryEntry, fileIndex },
-    setReaderContext,
-  } = useReader();
+  const { readerContext, setReaderContext } = useReader();
+  let { libraryEntry, fileIndex } = readerContext;
   libraryEntry = libraryEntry!;
   fileIndex = fileIndex!;
 
@@ -16,11 +14,11 @@ export const Reader = () => {
 
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(
-    libraryEntry.metafile.reading_progress[filename] ?? 0,
+    libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
   );
   const pagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const observer = useRef<IntersectionObserver | null>(null);
-  let readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
+  const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -33,7 +31,8 @@ export const Reader = () => {
   }, [fileIndex, libraryEntry]);
 
   useEffect(() => {
-    const lastReadPage = libraryEntry.metafile.reading_progress[filename] ?? 0;
+    const lastReadPage =
+      libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0;
     info("Restoring reading progress");
     pagesRef.current[lastReadPage]?.scrollIntoView({ behavior: "instant" });
   }, [numPages, filename, libraryEntry.metafile.reading_progress]);
@@ -81,12 +80,21 @@ export const Reader = () => {
     return () => {
       setReaderContext((context) => {
         const updatedContext = { ...context };
-        updatedContext.libraryEntry!.metafile.reading_progress[filename] =
-          currentPage;
+        updatedContext.libraryEntry!.metafile.reading_progress[filename] = {
+          current_page: currentPage,
+          total_pages: numPages,
+        };
         return updatedContext;
       });
     };
-  }, [currentPage, fileIndex, libraryEntry.metafile.source.id, filename]);
+  }, [
+    currentPage,
+    fileIndex,
+    libraryEntry.metafile.source.id,
+    filename,
+    numPages,
+    setReaderContext,
+  ]);
 
   return (
     <div>

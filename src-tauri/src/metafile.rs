@@ -11,10 +11,16 @@ use tokio::{
 use crate::{metadata::Metadata, source::SourceMeta};
 
 #[derive(Serialize, Deserialize, Clone)]
+pub struct ReadingProgress {
+    pub current_page: usize,
+    pub total_pages: usize,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
 pub struct Metafile {
     pub source: SourceMeta,
     pub metadata: Option<Metadata>,
-    pub reading_progress: HashMap<String, usize>,
+    pub reading_progress: HashMap<String, ReadingProgress>,
 }
 
 impl Metafile {

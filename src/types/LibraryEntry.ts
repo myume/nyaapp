@@ -5,7 +5,9 @@ type Metafile = {
   source: SourceMeta;
   metadata: Metadata | null;
   reading_progress: {
-    [filename: string]: number;
+    [filename: string]:
+      | { current_page: number; total_pages: number }
+      | undefined;
   };
 };
 

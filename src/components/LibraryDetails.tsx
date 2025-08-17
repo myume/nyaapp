@@ -1,12 +1,13 @@
 import { LibraryEntry } from "@/types/LibraryEntry";
 import { Separator } from "./ui/separator";
 import Image from "next/image";
+import { cn } from "@/lib/utils";
 
 export const LibraryDetails = ({
   libraryEntry: {
     name,
     files,
-    metafile: { metadata },
+    metafile: { metadata, reading_progress },
   },
   setFileIndex,
 }: {
@@ -47,15 +48,29 @@ export const LibraryDetails = ({
       <div className="space-y-5">
         <h2 className="text-2xl font-bold mb-5">Files</h2>
         <ul className="space-y-2 max-h-[50dvh] overflow-auto">
-          {files.map((file, i) => (
-            <li
-              className="hover:bg-muted/80 p-2 rounded w-fit transition-colors duration-200 hover:cursor-pointer"
-              onClick={() => setFileIndex(i)}
-              key={file}
-            >
-              {file}
-            </li>
-          ))}
+          {files.map((file, i) => {
+            const progress = reading_progress[file];
+            return (
+              <li
+                className={cn(
+                  "flex gap-5 w-full items-center hover:bg-muted/80 p-2 rounded:watch transition-colors duration-200 hover:cursor-pointer",
+                  progress &&
+                    progress?.current_page + 1 === progress?.total_pages &&
+                    "text-muted-foreground/60",
+                )}
+                onClick={() => setFileIndex(i)}
+                key={file}
+              >
+                {file}
+
+                {progress && (
+                  <span className="text-muted-foreground/60 text-xs">
+                    Page {progress.current_page + 1} / {progress.total_pages}
+                  </span>
+                )}
+              </li>
+            );
+          })}
         </ul>
       </div>
     </div>

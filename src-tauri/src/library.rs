@@ -8,7 +8,11 @@ use log::info;
 use serde::Serialize;
 use tokio::fs::{read_dir, remove_dir_all};
 
-use crate::{metafile::Metafile, utils::read_files_from_dir};
+use crate::{
+    metafile::{Metafile, ReadingProgress},
+    reader::Reader,
+    utils::read_files_from_dir,
+};
 
 #[derive(Serialize, Clone)]
 pub struct LibraryEntry {
@@ -112,6 +116,7 @@ impl Library {
         id: &str,
         file_num: usize,
         updated_page: usize,
+        reader: &mut impl Reader,
     ) -> Result<()> {
         let entry = self
             .entries
@@ -123,15 +128,34 @@ impl Library {
             .get(file_num)
             .context(format!("No file at index {}", file_num))?;
 
-        if Some(updated_page) == entry.metafile.reading_progress.get(filename).cloned() {
+        if Some(updated_page)
+            == entry
+                .metafile
+                .reading_progress
+                .get(filename)
+                .map(|progress| progress.current_page)
+        {
             log::info!("Reading progress for: {} is up to date", filename,);
             return Ok(());
         }
 
-        entry
-            .metafile
-            .reading_progress
-            .insert(filename.clone(), updated_page);
+        if let Some(progress) = entry.metafile.reading_progress.get_mut(filename) {
+            progress.current_page = updated_page;
+        } else {
+            entry.metafile.reading_progress.insert(
+                filename.clone(),
+                ReadingProgress {
+                    current_page: updated_page,
+                    // if we are loading the file in the updating_reading_progress function, it
+                    // means that the file is has already been loaded so this should be a gauranteed cache
+                    // hit. We will not read any files here, just return the number of files.
+                    // Kind of a hacky way to acheive this since it's so dependent on the order,
+                    // but for now it's a bit more elegant than reading/extracting the cbz files
+                    // just to fetch the number of files again.
+                    total_pages: reader.load(&entry.output_dir.join(filename))?,
+                },
+            );
+        }
 
         log::info!(
             "Updating reading progress for: {} to page {}",

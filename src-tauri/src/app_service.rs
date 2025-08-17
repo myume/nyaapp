@@ -259,10 +259,11 @@ impl AppService {
         file_num: usize,
         updated_page: usize,
     ) -> Result<()> {
+        let mut reader = self.cbz_reader.lock().await;
         self.library
             .lock()
             .await
-            .update_reading_progress(id, file_num, updated_page)
+            .update_reading_progress(id, file_num, updated_page, &mut *reader)
             .await
     }
 }
