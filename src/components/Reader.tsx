@@ -96,8 +96,20 @@ export const Reader = () => {
     setReaderContext,
   ]);
 
+  useEffect(() => {
+    const handleResize = () => {
+      pagesRef.current[currentPage]?.scrollIntoView({ behavior: "instant" });
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [currentPage]);
+
   return (
-    <div>
+    <div className="flex justify-center">
       <div className="grid">
         {Array.from({ length: numPages }, (_, i) => i).map((i) => (
           <Image
@@ -108,7 +120,7 @@ export const Reader = () => {
             data-page={i}
             src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
             alt={`Page ${i + 1}`}
-            className="w-full"
+            className="m-auto w-full xl:w-1/2"
             style={{ objectFit: "contain" }}
             height={500}
             width={500}
