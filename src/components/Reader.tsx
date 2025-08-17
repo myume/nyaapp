@@ -1,3 +1,5 @@
+"use client";
+
 import { info } from "@tauri-apps/plugin-log";
 import { invoke } from "@tauri-apps/api/core";
 import Image from "next/image";
@@ -109,23 +111,24 @@ export const Reader = () => {
   }, [currentPage]);
 
   return (
-    <div className="flex justify-center">
+    <>
       <div className="grid">
         {Array.from({ length: numPages }, (_, i) => i).map((i) => (
-          <Image
-            key={i}
-            ref={(el) => {
-              pagesRef.current[i] = el;
-            }}
-            data-page={i}
-            src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
-            alt={`Page ${i + 1}`}
-            className="m-auto w-full xl:w-1/2"
-            style={{ objectFit: "contain" }}
-            height={500}
-            width={500}
-            quality={100}
-          />
+          <div key={i} className="flex justify-center">
+            <Image
+              ref={(el) => {
+                pagesRef.current[i] = el;
+              }}
+              data-page={i}
+              src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
+              alt={`Page ${i + 1}`}
+              className="m-auto w-full xl:w-1/2"
+              style={{ objectFit: "contain" }}
+              height={1000}
+              width={500}
+              quality={100}
+            />
+          </div>
         ))}
       </div>
       {numPages > 0 && (
@@ -133,6 +136,6 @@ export const Reader = () => {
           {currentPage + 1} / {numPages}
         </div>
       )}
-    </div>
+    </>
   );
 };
