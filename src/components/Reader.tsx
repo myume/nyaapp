@@ -21,6 +21,7 @@ export const Reader = () => {
   const pagesRef = useRef<(HTMLImageElement | null)[]>([]);
   const observer = useRef<IntersectionObserver | null>(null);
   const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [dimensions, setDimensions] = useState<[number, number][]>([]);
 
   useEffect(() => {
     (async () => {
@@ -29,6 +30,11 @@ export const Reader = () => {
         fileNum: fileIndex,
       });
       setNumPages(numPages);
+      const dimensions = await invoke<[number, number][]>("get_dimensions", {
+        id: libraryEntry.metafile.source.id,
+        fileNum: fileIndex,
+      });
+      setDimensions(dimensions);
     })();
   }, [fileIndex, libraryEntry]);
 
@@ -114,21 +120,20 @@ export const Reader = () => {
     <>
       <div className="grid">
         {Array.from({ length: numPages }, (_, i) => i).map((i) => (
-          <div key={i} className="flex justify-center">
-            <Image
-              ref={(el) => {
-                pagesRef.current[i] = el;
-              }}
-              data-page={i}
-              src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
-              alt={`Page ${i + 1}`}
-              className="m-auto w-full xl:w-1/2"
-              style={{ objectFit: "contain" }}
-              height={1000}
-              width={500}
-              quality={100}
-            />
-          </div>
+          <Image
+            key={i}
+            ref={(el) => {
+              pagesRef.current[i] = el;
+            }}
+            data-page={i}
+            src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
+            alt={`Page ${i + 1}`}
+            className="m-auto w-full xl:w-1/2"
+            style={{ objectFit: "contain" }}
+            height={dimensions[i]?.[1] ?? 1000}
+            width={dimensions[i]?.[0] ?? 500}
+            quality={100}
+          />
         ))}
       </div>
       {numPages > 0 && (

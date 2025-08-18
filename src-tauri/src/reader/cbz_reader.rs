@@ -1,5 +1,10 @@
-use anyhow::Result;
-use std::{collections::HashMap, io::Read, path::Path};
+use anyhow::{Context, Result};
+use image::ImageReader;
+use std::{
+    collections::HashMap,
+    io::{Cursor, Read},
+    path::Path,
+};
 
 use crate::reader::Reader;
 
@@ -55,5 +60,21 @@ impl Reader for CBZReader {
                 .cloned()
                 .collect(),
         )
+    }
+
+    fn get_dimensions(&self, path: &Path) -> Result<Vec<(u32, u32)>> {
+        self.books
+            .get(&path.to_string_lossy().to_string())
+            .context(format!("Unable to find book at {}", path.display()))?
+            .values()
+            .into_iter()
+            .map(|page_data| {
+                let cursor = Cursor::new(page_data);
+                ImageReader::new(cursor)
+                    .with_guessed_format()
+                    .map(|r| r.into_dimensions().unwrap_or((0, 0)))
+                    .context("Failed to load image dimensions")
+            })
+            .collect()
     }
 }
