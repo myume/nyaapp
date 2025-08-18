@@ -91,7 +91,7 @@ export const Reader = () => {
         totalCount={numPages}
         initialTopMostItemIndex={currentPage}
         rangeChanged={(range) => setCurrentPage(range.startIndex)}
-        overscan={3}
+        increaseViewportBy={2000}
         itemContent={(i) => (
           <Image
             key={i}
@@ -102,7 +102,7 @@ export const Reader = () => {
             height={dimensions[i]?.[1] || 1000}
             width={dimensions[i]?.[0] || 500}
             quality={100}
-            loading={Math.abs(i - currentPage) <= 3 ? "eager" : "lazy"}
+            priority
           />
         )}
       />
