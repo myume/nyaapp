@@ -95,8 +95,9 @@ export const Reader = () => {
 
     parentRef.current.addEventListener("scroll", handleScroll);
 
+    const parent = parentRef.current;
     return () => {
-      parentRef.current?.removeEventListener("scroll", handleScroll);
+      parent?.removeEventListener("scroll", handleScroll);
     };
   }, [virtualizer, currentPage]);
 
@@ -189,7 +190,7 @@ export const Reader = () => {
       </div>
 
       {numPages > 0 && (
-        <div className="fixed bottom-2 right-2 text-muted-foreground text-[0.7rem]">
+        <div className="fixed bottom-2 right-2 text-muted-foreground text-[0.7rem] bg-black/70 backdrop-blur-sm px-2 py-1 rounded shadow-lg">
           {currentPage + 1} / {numPages}
         </div>
       )}
