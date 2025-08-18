@@ -1,10 +1,9 @@
 "use client";
 
-import { info } from "@tauri-apps/plugin-log";
 import { invoke } from "@tauri-apps/api/core";
 import Image from "next/image";
-import { useEffect, useRef, useState, useCallback } from "react";
-import { useVirtualizer } from "@tanstack/react-virtual";
+import { useEffect, useRef, useState } from "react";
+import { Virtuoso } from "react-virtuoso";
 import { useReader } from "./providers/ReaderProvider";
 
 export const Reader = () => {
@@ -19,33 +18,9 @@ export const Reader = () => {
   const [currentPage, setCurrentPage] = useState(
     libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
   );
-  const [dimensions, setDimensions] = useState<[number, number][]>([]);
   const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
-  const parentRef = useRef<HTMLDivElement>(null);
-
-  const virtualizer = useVirtualizer({
-    count: numPages,
-    getScrollElement: () => parentRef.current,
-    estimateSize: useCallback(
-      (index: number) => {
-        // Use actual dimensions if available, otherwise estimate
-        if (dimensions[index]) {
-          const [width, height] = dimensions[index];
-          const containerWidth = parentRef.current?.clientWidth ?? 1000;
-          // Calculate the actual display width based on responsive classes
-          const isXLScreen = containerWidth >= 1280; // xl breakpoint
-          const displayWidth = isXLScreen
-            ? containerWidth * 0.5
-            : containerWidth;
-          const scaleFactor = displayWidth / width;
-          return Math.ceil(height * scaleFactor);
-        }
-        return 1000;
-      },
-      [dimensions],
-    ),
-    overscan: 3,
-  });
+  const [dimensions, setDimensions] = useState<[number, number][]>([]);
+  const virtuoso = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -61,45 +36,6 @@ export const Reader = () => {
       setDimensions(dimensions);
     })();
   }, [fileIndex, libraryEntry]);
-
-  useEffect(() => {
-    if (numPages > 0) {
-      const lastReadPage =
-        libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0;
-      info(`Restoring reading progress to page ${lastReadPage}`);
-      virtualizer.scrollToIndex(lastReadPage, { align: "start" });
-    }
-  }, [numPages, filename, libraryEntry.metafile.reading_progress, virtualizer]);
-
-  useEffect(() => {
-    if (!parentRef.current) return;
-
-    const handleScroll = () => {
-      const items = virtualizer.getVirtualItems();
-      if (items.length > 0) {
-        const scrollTop = parentRef.current!.scrollTop;
-        const viewportHeight = parentRef.current!.clientHeight;
-        const centerY = scrollTop + viewportHeight / 2;
-
-        const centerItem = items.find((item) => {
-          return item.start <= centerY && centerY <= item.end;
-        });
-
-        const visibleItem = centerItem || items[0];
-
-        if (visibleItem && visibleItem.index !== currentPage) {
-          setCurrentPage(visibleItem.index);
-        }
-      }
-    };
-
-    parentRef.current.addEventListener("scroll", handleScroll);
-
-    const parent = parentRef.current;
-    return () => {
-      parent?.removeEventListener("scroll", handleScroll);
-    };
-  }, [virtualizer, currentPage]);
 
   useEffect(() => {
     if (readingProgressTimeout.current)
@@ -134,63 +70,29 @@ export const Reader = () => {
 
   return (
     <>
-      <div
-        ref={parentRef}
-        className="h-screen overflow-auto"
-        style={{
-          contain: "strict",
-        }}
-      >
-        <div
-          style={{
-            height: `${virtualizer.getTotalSize()}px`,
-            width: "100%",
-            position: "relative",
-          }}
-        >
-          {virtualizer.getVirtualItems().map((virtualItem) => (
-            <div
-              key={virtualItem.key}
-              data-index={virtualItem.index}
-              ref={(el) => {
-                if (el) {
-                  virtualizer.measureElement(el);
-                }
-              }}
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                width: "100%",
-                minHeight: `${virtualItem.size}px`,
-                transform: `translateY(${virtualItem.start}px)`,
-              }}
-              className="flex justify-center"
-            >
-              <div className="w-full xl:w-1/2 flex justify-center">
-                <Image
-                  src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${virtualItem.index}`}
-                  alt={`Page ${virtualItem.index + 1}`}
-                  className="max-w-full h-auto"
-                  style={{ objectFit: "contain" }}
-                  height={dimensions[virtualItem.index]?.[1] ?? 1000}
-                  width={dimensions[virtualItem.index]?.[0] ?? 500}
-                  quality={100}
-                  loading={
-                    Math.abs(virtualItem.index - currentPage) <=
-                    virtualizer.options.overscan
-                      ? "eager"
-                      : "lazy"
-                  }
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
+      <Virtuoso
+        ref={virtuoso}
+        style={{ height: "100vh" }}
+        totalCount={numPages}
+        initialTopMostItemIndex={currentPage}
+        rangeChanged={(range) => setCurrentPage(range.startIndex)}
+        overscan={3}
+        itemContent={(i) => (
+          <Image
+            key={i}
+            src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
+            alt={`Page ${i + 1}`}
+            className="m-auto w-full xl:w-1/2"
+            style={{ objectFit: "contain" }}
+            height={dimensions[i]?.[1] || 1000}
+            width={dimensions[i]?.[0] || 500}
+            quality={100}
+            loading={Math.abs(i - currentPage) <= 3 ? "eager" : "lazy"}
+          />
+        )}
+      />
       {numPages > 0 && (
-        <div className="fixed bottom-2 right-2 text-muted-foreground text-[0.7rem] bg-black/70 backdrop-blur-sm px-2 py-1 rounded shadow-lg">
+        <div className="fixed bottom-2 right-2 text-muted-foreground text-[0.7rem]">
           {currentPage + 1} / {numPages}
         </div>
       )}
