@@ -21,6 +21,20 @@ export const Reader = () => {
   const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
   const [dimensions, setDimensions] = useState<[number, number][]>([]);
   const virtuoso = useRef(null);
+  const [windowWidth, setWindowWidth] = useState(0);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -71,6 +85,7 @@ export const Reader = () => {
   return (
     <>
       <Virtuoso
+        key={windowWidth}
         ref={virtuoso}
         style={{ height: "100vh" }}
         totalCount={numPages}
