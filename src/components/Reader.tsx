@@ -22,6 +22,29 @@ export const Reader = () => {
   const [dimensions, setDimensions] = useState<[number, number][]>([]);
   const virtuoso = useRef(null);
   const [windowWidth, setWindowWidth] = useState(0);
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    observer.current = new IntersectionObserver(
+      (entries: IntersectionObserverEntry[]) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const page = Number.parseInt(
+              entry.target.getAttribute("data-page") ?? "0",
+            );
+            setCurrentPage(page);
+          }
+        }
+      },
+      {
+        threshold: 0.5,
+      },
+    );
+
+    return () => {
+      observer.current?.disconnect();
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -90,20 +113,28 @@ export const Reader = () => {
         style={{ height: "100vh" }}
         totalCount={numPages}
         initialTopMostItemIndex={currentPage}
-        rangeChanged={(range) => setCurrentPage(range.startIndex)}
         increaseViewportBy={2000}
         itemContent={(i) => (
-          <Image
-            key={i}
-            src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
-            alt={`Page ${i + 1}`}
-            className="m-auto w-full xl:w-1/2"
-            style={{ objectFit: "contain" }}
-            height={dimensions[i]?.[1] || 1000}
-            width={dimensions[i]?.[0] || 500}
-            quality={100}
-            priority
-          />
+          <div
+            data-page={i}
+            ref={(el) => {
+              if (el) {
+                observer.current?.observe(el);
+              }
+            }}
+          >
+            <Image
+              key={i}
+              src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
+              alt={`Page ${i + 1}`}
+              className="m-auto w-full xl:w-1/2"
+              style={{ objectFit: "contain" }}
+              height={dimensions[i]?.[1] || 1000}
+              width={dimensions[i]?.[0] || 500}
+              quality={100}
+              priority
+            />
+          </div>
         )}
       />
       {numPages > 0 && (
