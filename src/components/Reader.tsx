@@ -127,17 +127,6 @@ export const Reader = () => {
     setReaderContext,
   ]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      virtualizer.measure();
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [virtualizer, currentPage]);
-
   return (
     <>
       <div
