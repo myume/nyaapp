@@ -66,7 +66,7 @@ export const Reader = () => {
     if (numPages > 0) {
       const lastReadPage =
         libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0;
-      info("Restoring reading progress");
+      info(`Restoring reading progress to page ${lastReadPage}`);
       virtualizer.scrollToIndex(lastReadPage, { align: "start" });
     }
   }, [numPages, filename, libraryEntry.metafile.reading_progress, virtualizer]);
@@ -94,7 +94,7 @@ export const Reader = () => {
         setCurrentPage(visibleItem.index);
       }
     }
-  }, [virtualizer.getVirtualItems(), currentPage]);
+  }, [virtualizer, currentPage]);
 
   useEffect(() => {
     if (readingProgressTimeout.current)
@@ -130,7 +130,6 @@ export const Reader = () => {
   useEffect(() => {
     const handleResize = () => {
       virtualizer.measure();
-      virtualizer.scrollToIndex(currentPage, { align: "start" });
     };
 
     window.addEventListener("resize", handleResize);
