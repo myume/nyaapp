@@ -72,28 +72,32 @@ export const Reader = () => {
   }, [numPages, filename, libraryEntry.metafile.reading_progress, virtualizer]);
 
   useEffect(() => {
-    const items = virtualizer.getVirtualItems();
-    if (items.length > 0) {
-      // Find the item that's most visible
-      const visibleItem = items.find((item) => {
-        const element = document.querySelector(`[data-index="${item.index}"]`);
-        if (!element) return false;
+    if (!parentRef.current) return;
 
-        const rect = element.getBoundingClientRect();
-        const containerRect = parentRef.current?.getBoundingClientRect();
-        if (!containerRect) return false;
+    const handleScroll = () => {
+      const items = virtualizer.getVirtualItems();
+      if (items.length > 0) {
+        const scrollTop = parentRef.current!.scrollTop;
+        const viewportHeight = parentRef.current!.clientHeight;
+        const centerY = scrollTop + viewportHeight / 2;
 
-        // Check if the item is significantly visible
-        const visibleHeight =
-          Math.min(rect.bottom, containerRect.bottom) -
-          Math.max(rect.top, containerRect.top);
-        return visibleHeight > rect.height * 0.4;
-      });
+        const centerItem = items.find((item) => {
+          return item.start <= centerY && centerY <= item.end;
+        });
 
-      if (visibleItem && visibleItem.index !== currentPage) {
-        setCurrentPage(visibleItem.index);
+        const visibleItem = centerItem || items[0];
+
+        if (visibleItem && visibleItem.index !== currentPage) {
+          setCurrentPage(visibleItem.index);
+        }
       }
-    }
+    };
+
+    parentRef.current.addEventListener("scroll", handleScroll);
+
+    return () => {
+      parentRef.current?.removeEventListener("scroll", handleScroll);
+    };
   }, [virtualizer, currentPage]);
 
   useEffect(() => {
