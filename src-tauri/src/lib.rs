@@ -68,6 +68,7 @@ pub fn run() {
             commands::remove_download,
             commands::load_cbz,
             commands::update_reading_progress,
+            commands::get_dimensions,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

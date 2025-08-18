@@ -266,4 +266,24 @@ impl AppService {
             .update_reading_progress(id, file_num, updated_page, &mut *reader)
             .await
     }
+
+    pub async fn get_dimensions(&self, id: &str, file_num: usize) -> Result<Vec<(u32, u32)>> {
+        let entry = self
+            .library
+            .lock()
+            .await
+            .get_entry(id)
+            .await
+            .context(format!("Failed to find entry with id {} in library", id))?;
+
+        let filename = entry.files.get(file_num).context("File not found")?;
+
+        log::info!("Fetching dimensions for {}", filename);
+
+        self.cbz_reader
+            .lock()
+            .await
+            .get_dimensions(&entry.output_dir.join(filename))
+            .context(format!("Failed to get dimensions for {}", filename))
+    }
 }

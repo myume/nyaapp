@@ -199,3 +199,17 @@ pub async fn update_reading_progress(
         .await
         .map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn get_dimensions(
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+    file_num: usize,
+) -> Result<Vec<(u32, u32)>, String> {
+    state
+        .lock()
+        .await
+        .get_dimensions(&id, file_num)
+        .await
+        .map_err(|e| e.to_string())
+}

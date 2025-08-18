@@ -9,4 +9,6 @@ pub trait Reader {
     fn get(&self, path: &Path, index: usize) -> Option<Vec<u8>>;
 
     fn list(&self, path: &Path) -> Option<Vec<Vec<u8>>>;
+
+    fn get_dimensions(&self, path: &Path) -> Result<Vec<(u32, u32)>>;
 }

@@ -1,9 +1,9 @@
 "use client";
 
-import { info } from "@tauri-apps/plugin-log";
 import { invoke } from "@tauri-apps/api/core";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { useReader } from "./providers/ReaderProvider";
 
 export const Reader = () => {
@@ -18,9 +18,45 @@ export const Reader = () => {
   const [currentPage, setCurrentPage] = useState(
     libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
   );
-  const pagesRef = useRef<(HTMLImageElement | null)[]>([]);
-  const observer = useRef<IntersectionObserver | null>(null);
   const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
+  const [dimensions, setDimensions] = useState<[number, number][]>([]);
+  const virtuoso = useRef<VirtuosoHandle | null>(null);
+  const [windowWidth, setWindowWidth] = useState(0);
+  const observer = useRef<IntersectionObserver | null>(null);
+
+  useEffect(() => {
+    observer.current = new IntersectionObserver(
+      (entries: IntersectionObserverEntry[]) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            const page = Number.parseInt(
+              entry.target.getAttribute("data-page") ?? "0",
+            );
+            setCurrentPage(page);
+          }
+        }
+      },
+      {
+        threshold: 0.5,
+      },
+    );
+
+    return () => {
+      observer.current?.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
+      virtuoso.current?.scrollToIndex(currentPage);
+    };
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [currentPage]);
 
   useEffect(() => {
     (async () => {
@@ -29,43 +65,13 @@ export const Reader = () => {
         fileNum: fileIndex,
       });
       setNumPages(numPages);
+      const dimensions = await invoke<[number, number][]>("get_dimensions", {
+        id: libraryEntry.metafile.source.id,
+        fileNum: fileIndex,
+      });
+      setDimensions(dimensions);
     })();
   }, [fileIndex, libraryEntry]);
-
-  useEffect(() => {
-    const lastReadPage =
-      libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0;
-    info("Restoring reading progress");
-    pagesRef.current[lastReadPage]?.scrollIntoView({ behavior: "instant" });
-  }, [numPages, filename, libraryEntry.metafile.reading_progress]);
-
-  useEffect(() => {
-    observer.current = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const page = entry.target.getAttribute("data-page");
-            if (page) {
-              setCurrentPage(parseInt(page));
-            }
-          }
-        }
-      },
-      { threshold: 0.4 },
-    );
-
-    for (const item of pagesRef.current) {
-      if (item) {
-        observer.current.observe(item);
-      }
-    }
-
-    return () => {
-      if (observer.current) {
-        observer.current.disconnect();
-      }
-    };
-  }, [numPages]);
 
   useEffect(() => {
     if (readingProgressTimeout.current)
@@ -98,39 +104,38 @@ export const Reader = () => {
     setReaderContext,
   ]);
 
-  useEffect(() => {
-    const handleResize = () => {
-      pagesRef.current[currentPage]?.scrollIntoView({ behavior: "instant" });
-    };
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [currentPage]);
-
   return (
     <>
-      <div className="grid">
-        {Array.from({ length: numPages }, (_, i) => i).map((i) => (
-          <div key={i} className="flex justify-center">
+      <Virtuoso
+        key={windowWidth}
+        ref={virtuoso}
+        style={{ height: "100vh" }}
+        totalCount={numPages}
+        initialTopMostItemIndex={currentPage}
+        increaseViewportBy={2000}
+        itemContent={(i) => (
+          <div
+            data-page={i}
+            ref={(el) => {
+              if (el) {
+                observer.current?.observe(el);
+              }
+            }}
+          >
             <Image
-              ref={(el) => {
-                pagesRef.current[i] = el;
-              }}
-              data-page={i}
+              key={i}
               src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
               alt={`Page ${i + 1}`}
               className="m-auto w-full xl:w-1/2"
               style={{ objectFit: "contain" }}
-              height={1000}
-              width={500}
+              height={dimensions[i]?.[1] || 1000}
+              width={dimensions[i]?.[0] || 500}
               quality={100}
+              priority
             />
           </div>
-        ))}
-      </div>
+        )}
+      />
       {numPages > 0 && (
         <div className="fixed bottom-2 right-2 text-muted-foreground text-[0.7rem]">
           {currentPage + 1} / {numPages}

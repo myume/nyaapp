@@ -1,9 +1,14 @@
-use anyhow::Result;
-use std::{collections::HashMap, io::Read, path::Path};
+use anyhow::{Context, Result};
+use image::ImageReader;
+use std::{
+    collections::HashMap,
+    io::{Cursor, Read},
+    path::Path,
+};
 
 use crate::reader::Reader;
 
-type Pages = HashMap<usize, Vec<u8>>;
+type Pages = Vec<Vec<u8>>;
 
 pub struct CBZReader {
     books: HashMap<String, Pages>,
@@ -28,14 +33,14 @@ impl Reader for CBZReader {
         let file = std::fs::File::open(path)?;
         let mut archive = zip::ZipArchive::new(file)?;
 
-        let mut map = HashMap::new();
+        let mut pages = Vec::new();
         for i in 0..archive.len() {
             let mut file = archive.by_index(i).unwrap();
             let mut content = Vec::new();
             file.read_to_end(&mut content)?;
-            map.insert(i, content);
+            pages.push(content);
         }
-        self.books.insert(key, map);
+        self.books.insert(key, pages);
 
         Ok(archive.len())
     }
@@ -43,17 +48,26 @@ impl Reader for CBZReader {
     fn get(&self, path: &Path, index: usize) -> Option<Vec<u8>> {
         self.books
             .get(&path.to_string_lossy().to_string())?
-            .get(&index)
+            .get(index)
             .cloned()
     }
 
-    fn list(&self, path: &Path) -> Option<Vec<Vec<u8>>> {
-        Some(
-            self.books
-                .get(&path.to_string_lossy().to_string())?
-                .values()
-                .cloned()
-                .collect(),
-        )
+    fn list(&self, path: &Path) -> Option<Pages> {
+        Some(self.books.get(&path.to_string_lossy().to_string())?.clone())
+    }
+
+    fn get_dimensions(&self, path: &Path) -> Result<Vec<(u32, u32)>> {
+        self.books
+            .get(&path.to_string_lossy().to_string())
+            .context(format!("Unable to find book at {}", path.display()))?
+            .into_iter()
+            .map(|page_data| {
+                let cursor = Cursor::new(page_data);
+                ImageReader::new(cursor)
+                    .with_guessed_format()
+                    .map(|r| r.into_dimensions().unwrap_or((0, 0)))
+                    .context("Failed to load image dimensions")
+            })
+            .collect()
     }
 }
