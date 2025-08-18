@@ -3,7 +3,8 @@
 import { info } from "@tauri-apps/plugin-log";
 import { invoke } from "@tauri-apps/api/core";
 import Image from "next/image";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
+import { useVirtualizer } from "@tanstack/react-virtual";
 import { useReader } from "./providers/ReaderProvider";
 
 export const Reader = () => {
@@ -18,10 +19,33 @@ export const Reader = () => {
   const [currentPage, setCurrentPage] = useState(
     libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
   );
-  const pagesRef = useRef<(HTMLImageElement | null)[]>([]);
-  const observer = useRef<IntersectionObserver | null>(null);
-  const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
   const [dimensions, setDimensions] = useState<[number, number][]>([]);
+  const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
+  const parentRef = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: numPages,
+    getScrollElement: () => parentRef.current,
+    estimateSize: useCallback(
+      (index: number) => {
+        // Use actual dimensions if available, otherwise estimate
+        if (dimensions[index]) {
+          const [width, height] = dimensions[index];
+          const containerWidth = parentRef.current?.clientWidth ?? 1000;
+          // Calculate the actual display width based on responsive classes
+          const isXLScreen = containerWidth >= 1280; // xl breakpoint
+          const displayWidth = isXLScreen
+            ? containerWidth * 0.5
+            : containerWidth;
+          const scaleFactor = displayWidth / width;
+          return Math.ceil(height * scaleFactor);
+        }
+        return 1000;
+      },
+      [dimensions],
+    ),
+    overscan: 3,
+  });
 
   useEffect(() => {
     (async () => {
@@ -39,39 +63,38 @@ export const Reader = () => {
   }, [fileIndex, libraryEntry]);
 
   useEffect(() => {
-    const lastReadPage =
-      libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0;
-    info("Restoring reading progress");
-    pagesRef.current[lastReadPage]?.scrollIntoView({ behavior: "instant" });
-  }, [numPages, filename, libraryEntry.metafile.reading_progress]);
+    if (numPages > 0) {
+      const lastReadPage =
+        libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0;
+      info("Restoring reading progress");
+      virtualizer.scrollToIndex(lastReadPage, { align: "start" });
+    }
+  }, [numPages, filename, libraryEntry.metafile.reading_progress, virtualizer]);
 
   useEffect(() => {
-    observer.current = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) {
-            const page = entry.target.getAttribute("data-page");
-            if (page) {
-              setCurrentPage(parseInt(page));
-            }
-          }
-        }
-      },
-      { threshold: 0.4 },
-    );
+    const items = virtualizer.getVirtualItems();
+    if (items.length > 0) {
+      // Find the item that's most visible
+      const visibleItem = items.find((item) => {
+        const element = document.querySelector(`[data-index="${item.index}"]`);
+        if (!element) return false;
 
-    for (const item of pagesRef.current) {
-      if (item) {
-        observer.current.observe(item);
+        const rect = element.getBoundingClientRect();
+        const containerRect = parentRef.current?.getBoundingClientRect();
+        if (!containerRect) return false;
+
+        // Check if the item is significantly visible
+        const visibleHeight =
+          Math.min(rect.bottom, containerRect.bottom) -
+          Math.max(rect.top, containerRect.top);
+        return visibleHeight > rect.height * 0.4;
+      });
+
+      if (visibleItem && visibleItem.index !== currentPage) {
+        setCurrentPage(visibleItem.index);
       }
     }
-
-    return () => {
-      if (observer.current) {
-        observer.current.disconnect();
-      }
-    };
-  }, [numPages]);
+  }, [virtualizer.getVirtualItems(), currentPage]);
 
   useEffect(() => {
     if (readingProgressTimeout.current)
@@ -106,36 +129,73 @@ export const Reader = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      pagesRef.current[currentPage]?.scrollIntoView({ behavior: "instant" });
+      virtualizer.measure();
+      virtualizer.scrollToIndex(currentPage, { align: "start" });
     };
 
     window.addEventListener("resize", handleResize);
-
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, [currentPage]);
+  }, [virtualizer, currentPage]);
 
   return (
     <>
-      <div className="grid">
-        {Array.from({ length: numPages }, (_, i) => i).map((i) => (
-          <Image
-            key={i}
-            ref={(el) => {
-              pagesRef.current[i] = el;
-            }}
-            data-page={i}
-            src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
-            alt={`Page ${i + 1}`}
-            className="m-auto w-full xl:w-1/2"
-            style={{ objectFit: "contain" }}
-            height={dimensions[i]?.[1] ?? 1000}
-            width={dimensions[i]?.[0] ?? 500}
-            quality={100}
-          />
-        ))}
+      <div
+        ref={parentRef}
+        className="h-screen overflow-auto"
+        style={{
+          contain: "strict",
+        }}
+      >
+        <div
+          style={{
+            height: `${virtualizer.getTotalSize()}px`,
+            width: "100%",
+            position: "relative",
+          }}
+        >
+          {virtualizer.getVirtualItems().map((virtualItem) => (
+            <div
+              key={virtualItem.key}
+              data-index={virtualItem.index}
+              ref={(el) => {
+                if (el) {
+                  virtualizer.measureElement(el);
+                }
+              }}
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                minHeight: `${virtualItem.size}px`,
+                transform: `translateY(${virtualItem.start}px)`,
+              }}
+              className="flex justify-center"
+            >
+              <div className="w-full xl:w-1/2 flex justify-center">
+                <Image
+                  src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${virtualItem.index}`}
+                  alt={`Page ${virtualItem.index + 1}`}
+                  className="max-w-full h-auto"
+                  style={{ objectFit: "contain" }}
+                  height={dimensions[virtualItem.index]?.[1] ?? 1000}
+                  width={dimensions[virtualItem.index]?.[0] ?? 500}
+                  quality={100}
+                  loading={
+                    Math.abs(virtualItem.index - currentPage) <=
+                    virtualizer.options.overscan
+                      ? "eager"
+                      : "lazy"
+                  }
+                />
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
+
       {numPages > 0 && (
         <div className="fixed bottom-2 right-2 text-muted-foreground text-[0.7rem]">
           {currentPage + 1} / {numPages}

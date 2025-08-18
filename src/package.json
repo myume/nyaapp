@@ -16,6 +16,7 @@
     "@radix-ui/react-separator": "^1.1.7",
     "@radix-ui/react-slot": "^1.2.3",
     "@radix-ui/react-tooltip": "^1.2.7",
+    "@tanstack/react-virtual": "^3.13.12",
     "@tauri-apps/api": "^2.7.0",
     "@tauri-apps/plugin-log": "^2.6.0",
     "class-variance-authority": "^0.7.1",
