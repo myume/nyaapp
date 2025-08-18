@@ -3,7 +3,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { useReader } from "./providers/ReaderProvider";
 
 export const Reader = () => {
@@ -20,7 +20,7 @@ export const Reader = () => {
   );
   const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
   const [dimensions, setDimensions] = useState<[number, number][]>([]);
-  const virtuoso = useRef(null);
+  const virtuoso = useRef<VirtuosoHandle | null>(null);
   const [windowWidth, setWindowWidth] = useState(0);
   const observer = useRef<IntersectionObserver | null>(null);
 
@@ -49,15 +49,14 @@ export const Reader = () => {
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
+      virtuoso.current?.scrollToIndex(currentPage);
     };
-
     window.addEventListener("resize", handleResize);
-    handleResize();
 
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     (async () => {
