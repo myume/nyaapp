@@ -1,7 +1,7 @@
 "use client";
 
 import { useReader } from "@/components/providers/ReaderProvider";
-import { Reader } from "@/components/Reader";
+import { Reader } from "@/components/reader/Reader";
 import Link from "next/link";
 
 export default function ReaderPage() {

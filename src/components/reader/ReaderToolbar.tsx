@@ -1,8 +1,8 @@
 "use client";
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import { useReader } from "./providers/ReaderProvider";
-import { Button } from "./ui/button";
+import { useReader } from "../providers/ReaderProvider";
+import { Button } from "../ui/button";
 
 export const ReaderToolbar = ({
   currentPage,

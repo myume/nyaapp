@@ -4,7 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
-import { useReader } from "./providers/ReaderProvider";
+import { useReader } from "../providers/ReaderProvider";
 import { ReaderToolbar } from "./ReaderToolbar";
 
 export const Reader = () => {
