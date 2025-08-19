@@ -1,9 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, EllipsisVertical } from "lucide-react";
 import { useReader } from "../providers/ReaderProvider";
 import { Button } from "../ui/button";
+import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import { ReaderMenu } from "./ReaderMenu";
+import { DialogTitle } from "@radix-ui/react-dialog";
 
 export const ReaderToolbar = ({
   currentPage,
@@ -30,12 +33,12 @@ export const ReaderToolbar = ({
   }, [readerContext.fileIndex]);
 
   return (
-    <div className="bg-background/80 px-4 py-2 flex items-center justify-between gap-5 text-sm">
+    <div className="bg-background/80 px-4 py-2 flex items-center justify-between gap-5 text-xs">
       <h1 className="flex-1 truncate overflow-ellipsis">
         {readerContext.libraryEntry?.files[readerContext.fileIndex ?? 0]}
       </h1>
       <div className="flex gap-4">
-        <div className="flex flex-1 items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2">
           <Button
             variant="outline"
             disabled={currentPage <= 0}
@@ -77,7 +80,7 @@ export const ReaderToolbar = ({
             <ChevronRight />
           </Button>
         </div>
-        <div className="flex flex-1 items-center justify-end gap-2">
+        <div className="flex items-center justify-end gap-2">
           <Button
             disabled={readerContext.fileIndex === 0}
             variant="outline"
@@ -154,6 +157,15 @@ export const ReaderToolbar = ({
           </Button>
         </div>
       </div>
+      <Dialog>
+        <DialogTrigger asChild>
+          <EllipsisVertical size={16} />
+        </DialogTrigger>
+        <DialogContent>
+          <DialogTitle className="font-bold">Settings</DialogTitle>
+          <ReaderMenu />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
