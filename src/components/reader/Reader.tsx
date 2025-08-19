@@ -105,7 +105,13 @@ export const Reader = () => {
   ]);
 
   return (
-    <div className="relative">
+    <div
+      className="relative"
+      style={{
+        background:
+          libraryEntry.metafile.settings?.reader.background_color ?? "#000000",
+      }}
+    >
       <div className="absolute top-0 w-full z-10 opacity-0 hover:opacity-100 transition-opacity duration-300 has-focus:opacity-100">
         <ReaderToolbar
           currentPage={currentPage}
@@ -139,8 +145,14 @@ export const Reader = () => {
               key={i}
               src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${i}`}
               alt={`Page ${i + 1}`}
+              style={{
+                objectFit: "contain",
+                paddingBottom:
+                  i !== numPages - 1
+                    ? (libraryEntry.metafile.settings?.reader.gap ?? 0)
+                    : 0,
+              }}
               className="m-auto w-full xl:w-1/2"
-              style={{ objectFit: "contain" }}
               height={dimensions[i]?.[1] || 1000}
               width={dimensions[i]?.[0] || 500}
               quality={100}
