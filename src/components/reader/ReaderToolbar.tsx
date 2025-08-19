@@ -4,9 +4,15 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, EllipsisVertical } from "lucide-react";
 import { useReader } from "../providers/ReaderProvider";
 import { Button } from "../ui/button";
-import { Dialog, DialogContent, DialogTrigger } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from "../ui/dialog";
 import { ReaderMenu } from "./ReaderMenu";
-import { DialogTitle } from "@radix-ui/react-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
+import { SelectValue } from "@radix-ui/react-select";
 
 export const ReaderToolbar = ({
   currentPage,
@@ -33,11 +39,40 @@ export const ReaderToolbar = ({
   }, [readerContext.fileIndex]);
 
   return (
-    <div className="bg-background/80 px-4 py-2 flex items-center justify-between gap-5 text-xs">
-      <h1 className="flex-1 truncate overflow-ellipsis">
-        {readerContext.libraryEntry?.files[readerContext.fileIndex ?? 0]}
-      </h1>
-      <div className="flex gap-4">
+    <div className="bg-background/90 px-4 py-2 flex items-center gap-5 text-xs">
+      <div className="min-w-0">
+        <Select
+          defaultValue={
+            readerContext.libraryEntry?.files[readerContext.fileIndex ?? 0]
+          }
+          onValueChange={(selectedFile) => {
+            const fileIndex =
+              readerContext.libraryEntry?.files.findIndex(
+                (file) => file === selectedFile,
+              ) ?? 0;
+            setReaderContext((context) => ({
+              ...context,
+              fileIndex,
+            }));
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <div className="truncate overflow-hidden text-ellipsis whitespace-nowrap flex-1 text-left">
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent className="bg-background/90">
+            {readerContext.libraryEntry?.files.map((file) => (
+              <SelectItem key={file} value={file}>
+                {file}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex-1" />
+
+      <div className="flex gap-4 items-center flex-shrink-0">
         <div className="flex items-center justify-center gap-2">
           <Button
             variant="outline"
@@ -156,16 +191,16 @@ export const ReaderToolbar = ({
             <ChevronRight />
           </Button>
         </div>
+        <Dialog>
+          <DialogTrigger asChild>
+            <EllipsisVertical size={16} />
+          </DialogTrigger>
+          <DialogContent>
+            <DialogTitle className="font-bold">Settings</DialogTitle>
+            <ReaderMenu />
+          </DialogContent>
+        </Dialog>
       </div>
-      <Dialog>
-        <DialogTrigger asChild>
-          <EllipsisVertical size={16} />
-        </DialogTrigger>
-        <DialogContent>
-          <DialogTitle className="font-bold">Settings</DialogTitle>
-          <ReaderMenu />
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
