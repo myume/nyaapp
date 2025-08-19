@@ -9,7 +9,20 @@ type Metafile = {
       | { current_page: number; total_pages: number }
       | undefined;
   };
+  settings: LibraryEntrySettings | null;
 };
+
+type LibraryEntrySettings = {
+  gap: number | null;
+  background_color: string | null;
+  layout: ReaderLayout | null;
+};
+
+export enum ReaderLayout {
+  LongStrip = "LongStrip",
+  SinglePage = "SinglePage",
+  DoublePage = "DoublePage",
+}
 
 export type LibraryEntry = {
   name: string;

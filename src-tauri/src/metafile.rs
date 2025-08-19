@@ -8,7 +8,7 @@ use tokio::{
     io::AsyncWriteExt,
 };
 
-use crate::{metadata::Metadata, source::SourceMeta};
+use crate::{metadata::Metadata, settings::LibraryEntrySettings, source::SourceMeta};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ReadingProgress {
@@ -21,6 +21,7 @@ pub struct Metafile {
     pub source: SourceMeta,
     pub metadata: Option<Metadata>,
     pub reading_progress: HashMap<String, ReadingProgress>,
+    pub settings: Option<LibraryEntrySettings>,
 }
 
 impl Metafile {
@@ -29,6 +30,7 @@ impl Metafile {
             source,
             metadata,
             reading_progress: HashMap::new(),
+            settings: None,
         }
     }
 

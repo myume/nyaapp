@@ -9,6 +9,7 @@ pub mod library;
 pub mod metadata;
 pub mod metafile;
 pub mod reader;
+pub mod settings;
 pub mod source;
 pub mod torrent;
 pub mod utils;
