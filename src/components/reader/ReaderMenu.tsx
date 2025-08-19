@@ -4,7 +4,7 @@ import { HexColorInput, HexColorPicker } from "react-colorful";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useReader } from "../providers/ReaderProvider";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
+import { useForm, WatchObserver } from "react-hook-form";
 import {
   Form,
   FormControl,
@@ -23,9 +23,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { ReaderLayout } from "@/types/LibraryEntry";
+import { LibraryEntrySettings, ReaderLayout } from "@/types/LibraryEntry";
 import { useEffect } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { invoke } from "@tauri-apps/api/core";
 
 const settingsSchema = z.object({
   gap: z.string().regex(/^\d+$/, "Must be a valid number"),
@@ -38,27 +39,56 @@ const settingsSchema = z.object({
 export const ReaderMenu = () => {
   const {
     readerContext: { libraryEntry },
+    setReaderContext,
   } = useReader();
   const form = useForm<z.infer<typeof settingsSchema>>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      gap: libraryEntry?.metafile.settings?.gap?.toString() ?? "0",
+      gap: libraryEntry?.metafile.settings?.reader?.gap?.toString() ?? "0",
       background_color:
-        libraryEntry?.metafile.settings?.background_color ?? "#000000",
-      layout: libraryEntry?.metafile.settings?.layout ?? "LongStrip",
+        libraryEntry?.metafile.settings?.reader?.background_color ?? "#000000",
+      layout: libraryEntry?.metafile.settings?.reader?.layout ?? "LongStrip",
     },
   });
 
-  const debouncedUpdate = useDebouncedCallback((values) => {
+  const updateReaderSettings: WatchObserver<
+    z.infer<typeof settingsSchema>
+  > = async (values) => {
     if (form.formState.isValid) {
-      console.log(values);
+      const settings = {
+        ...values,
+        gap: parseInt(values.gap!),
+      };
+      setReaderContext((context) => {
+        const updatedContext = { ...context };
+        if (updatedContext.libraryEntry?.metafile.settings) {
+          updatedContext.libraryEntry.metafile.settings.reader =
+            settings as LibraryEntrySettings["reader"];
+        }
+        return updatedContext;
+      });
+
+      await invoke("update_library_entry_settings", {
+        id: libraryEntry?.metafile.source.id,
+        settings: {
+          ...libraryEntry?.metafile.settings,
+          reader: {
+            ...libraryEntry?.metafile.settings?.reader,
+            settings,
+          },
+        },
+      });
     }
-  }, 300);
+  };
+
+  const debouncedUpdate = useDebouncedCallback(updateReaderSettings, 300);
 
   useEffect(() => {
     const subscription = form.watch(debouncedUpdate);
-    return () => subscription.unsubscribe();
-  }, [form]);
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [form, debouncedUpdate]);
 
   return (
     <Form {...form}>

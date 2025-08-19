@@ -8,11 +8,6 @@ pub enum ReaderLayout {
 }
 
 #[derive(Serialize, Deserialize, Clone)]
-pub struct LibraryEntrySettings {
-    pub reader: ReaderSettings,
-}
-
-#[derive(Serialize, Deserialize, Clone)]
 pub struct ReaderSettings {
     pub gap: Option<u32>,
     pub background_color: Option<String>,

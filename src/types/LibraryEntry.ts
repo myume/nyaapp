@@ -12,10 +12,12 @@ type Metafile = {
   settings: LibraryEntrySettings | null;
 };
 
-type LibraryEntrySettings = {
-  gap: number | null;
-  background_color: string | null;
-  layout: ReaderLayout | null;
+export type LibraryEntrySettings = {
+  reader: {
+    gap?: number;
+    background_color?: string;
+    layout?: ReaderLayout;
+  };
 };
 
 export enum ReaderLayout {

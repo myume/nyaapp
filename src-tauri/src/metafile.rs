@@ -8,7 +8,7 @@ use tokio::{
     io::AsyncWriteExt,
 };
 
-use crate::{metadata::Metadata, settings::LibraryEntrySettings, source::SourceMeta};
+use crate::{library::LibraryEntrySettings, metadata::Metadata, source::SourceMeta};
 
 #[derive(Serialize, Deserialize, Clone)]
 pub struct ReadingProgress {

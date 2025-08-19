@@ -5,7 +5,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     app_service::{AppService, SearchResponse},
-    library::LibraryEntry,
+    library::{LibraryEntry, LibraryEntrySettings},
     torrent::TorrentStats,
 };
 
@@ -210,6 +210,20 @@ pub async fn get_dimensions(
         .lock()
         .await
         .get_dimensions(&id, file_num)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn update_library_entry_settings(
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+    settings: LibraryEntrySettings,
+) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .update_library_entry_settings(&id, settings)
         .await
         .map_err(|e| e.to_string())
 }

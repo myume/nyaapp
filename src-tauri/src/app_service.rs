@@ -8,7 +8,7 @@ use tokio::{
 };
 
 use crate::{
-    library::{Library, LibraryEntry},
+    library::{Library, LibraryEntry, LibraryEntrySettings},
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
     metafile::Metafile,
     reader::{cbz_reader::CBZReader, Reader},
@@ -285,5 +285,18 @@ impl AppService {
             .await
             .get_dimensions(&entry.output_dir.join(filename))
             .context(format!("Failed to get dimensions for {}", filename))
+    }
+
+    pub async fn update_library_entry_settings(
+        &self,
+        id: &str,
+        settings: LibraryEntrySettings,
+    ) -> Result<()> {
+        log::info!("Updating settings for library entry {}", id);
+        self.library
+            .lock()
+            .await
+            .update_library_entry_settings(id, settings)
+            .await
     }
 }

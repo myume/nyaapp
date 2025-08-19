@@ -69,6 +69,7 @@ pub fn run() {
             commands::remove_download,
             commands::load_cbz,
             commands::update_reading_progress,
+            commands::update_library_entry_settings,
             commands::get_dimensions,
         ])
         .run(tauri::generate_context!())

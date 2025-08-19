@@ -5,12 +5,13 @@ use std::{
 
 use anyhow::{Context, Result};
 use log::info;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use tokio::fs::{read_dir, remove_dir_all};
 
 use crate::{
     metafile::{Metafile, ReadingProgress},
     reader::Reader,
+    settings::ReaderSettings,
     utils::read_files_from_dir,
 };
 
@@ -20,6 +21,11 @@ pub struct LibraryEntry {
     pub metafile: Metafile,
     pub output_dir: PathBuf,
     pub files: Vec<String>,
+}
+
+#[derive(Serialize, Deserialize, Clone)]
+pub struct LibraryEntrySettings {
+    pub reader: ReaderSettings,
 }
 
 pub struct Library {
@@ -163,6 +169,22 @@ impl Library {
             updated_page,
         );
 
+        entry.metafile.write(&entry.output_dir).await?;
+
+        Ok(())
+    }
+
+    pub async fn update_library_entry_settings(
+        &mut self,
+        id: &str,
+        settings: LibraryEntrySettings,
+    ) -> Result<()> {
+        let entry = self
+            .entries
+            .get_mut(id)
+            .context(format!("Missing library entry for {}", id))?;
+
+        entry.metafile.settings = Some(settings);
         entry.metafile.write(&entry.output_dir).await?;
 
         Ok(())
