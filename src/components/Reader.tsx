@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { useReader } from "./providers/ReaderProvider";
+import { ReaderToolbar } from "./ReaderToolbar";
 
 export const Reader = () => {
   const { readerContext, setReaderContext } = useReader();
@@ -105,7 +106,20 @@ export const Reader = () => {
   ]);
 
   return (
-    <>
+    <div className="relative">
+      <div className="absolute top-0 w-full z-10 opacity-0 hover:opacity-100 transition-opacity duration-300">
+        <ReaderToolbar
+          currentPage={currentPage}
+          numPages={numPages}
+          setCurrentPageAction={(page) => {
+            setCurrentPage(page);
+            virtuoso.current?.scrollToIndex({
+              index: page,
+              behavior: "smooth",
+            });
+          }}
+        />
+      </div>
       <Virtuoso
         key={windowWidth}
         ref={virtuoso}
@@ -137,10 +151,10 @@ export const Reader = () => {
         )}
       />
       {numPages > 0 && (
-        <div className="fixed bottom-2 right-2 text-muted-foreground text-[0.7rem]">
+        <div className="absolute bottom-2 right-2 text-muted-foreground text-[0.7rem]">
           {currentPage + 1} / {numPages}
         </div>
       )}
-    </>
+    </div>
   );
 };
