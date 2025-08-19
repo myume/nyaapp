@@ -6,6 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 import { useReader } from "../providers/ReaderProvider";
 import { ReaderToolbar } from "./ReaderToolbar";
+import { useDebouncedCallback } from "use-debounce";
 
 export const Reader = () => {
   const { readerContext, setReaderContext } = useReader();
@@ -19,7 +20,6 @@ export const Reader = () => {
   const [currentPage, setCurrentPage] = useState(
     libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
   );
-  const readingProgressTimeout = useRef<NodeJS.Timeout | null>(null);
   const [dimensions, setDimensions] = useState<[number, number][]>([]);
   const virtuoso = useRef<VirtuosoHandle | null>(null);
   const [windowWidth, setWindowWidth] = useState(0);
@@ -74,17 +74,16 @@ export const Reader = () => {
     })();
   }, [fileIndex, libraryEntry]);
 
-  useEffect(() => {
-    if (readingProgressTimeout.current)
-      clearTimeout(readingProgressTimeout.current);
+  const updateReadingProgress = useDebouncedCallback(async () => {
+    await invoke("update_reading_progress", {
+      id: libraryEntry.metafile.source.id,
+      fileNum: fileIndex,
+      updatedPage: currentPage,
+    });
+  }, 500);
 
-    readingProgressTimeout.current = setTimeout(async () => {
-      await invoke("update_reading_progress", {
-        id: libraryEntry.metafile.source.id,
-        fileNum: fileIndex,
-        updatedPage: currentPage,
-      });
-    }, 500);
+  useEffect(() => {
+    updateReadingProgress();
 
     return () => {
       setReaderContext((context) => {
