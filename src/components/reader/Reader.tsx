@@ -107,7 +107,7 @@ export const Reader = () => {
 
   return (
     <div className="relative">
-      <div className="absolute top-0 w-full z-10 opacity-0 hover:opacity-100 transition-opacity duration-300">
+      <div className="absolute top-0 w-full z-10 opacity-0 hover:opacity-100 transition-opacity duration-300 has-focus:opacity-100">
         <ReaderToolbar
           currentPage={currentPage}
           numPages={numPages}
