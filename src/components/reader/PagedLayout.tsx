@@ -85,7 +85,7 @@ export const PagedLayout = ({
             length: Math.min(columns, numPages - currentPage),
           },
           (_, i) => {
-            const pageIndex = Math.max(currentPage - i, 0);
+            const pageIndex = currentPage - i;
             return (
               <Image
                 key={i}

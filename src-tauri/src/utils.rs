@@ -62,8 +62,12 @@ pub fn parse_pages_uri(uri: &str) -> Result<(String, usize, usize), String> {
     }
 
     let id = parts[0].to_owned();
-    let file_num = parts[1].parse().expect("File num must be a valid number");
-    let page_num = parts[2].parse().expect("Page num must be a valid number");
+    let file_num = parts[1]
+        .parse()
+        .map_err(|_| "File num must be a valid number")?;
+    let page_num = parts[2]
+        .parse()
+        .map_err(|_| "Page num must be a valid number")?;
 
     Ok((id, file_num, page_num))
 }

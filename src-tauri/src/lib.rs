@@ -45,13 +45,23 @@ pub fn run() {
                     let state = app.app_handle().state::<Mutex<AppService>>();
                     let content = tauri::async_runtime::block_on(async {
                         state.lock().await.get_page(&id, file_num, page_num).await
-                    })
-                    .expect(&format!(
-                        "Could not get page {} for id {} and file {}",
-                        page_num, id, file_num
-                    ));
+                    });
 
-                    Response::builder().status(200).body(content).unwrap()
+                    match content {
+                        Ok(page) => Response::builder().status(200).body(page).unwrap(),
+                        Err(e) => {
+                            log::error!(
+                                "Could not get page {} for id {} and file {}",
+                                page_num,
+                                id,
+                                file_num
+                            );
+                            Response::builder()
+                                .status(400)
+                                .body(e.to_string().into_bytes())
+                                .unwrap()
+                        }
+                    }
                 }
                 Err(e) => {
                     log::error!("{e}");
