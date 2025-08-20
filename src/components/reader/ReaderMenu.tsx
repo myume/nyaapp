@@ -113,7 +113,7 @@ export const ReaderMenu = () => {
                   <SelectGroup>
                     {Object.values(ReaderLayout).map((layout) => (
                       <SelectItem key={layout} value={layout}>
-                        {layout}
+                        {layout.replace(/([A-Z])/g, " $1").trim()}
                       </SelectItem>
                     ))}
                   </SelectGroup>
