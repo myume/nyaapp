@@ -97,6 +97,7 @@ export const Reader = () => {
   ]);
 
   let viewer;
+  let pageOffset = 1;
   switch (libraryEntry.metafile.settings?.reader.layout) {
     case ReaderLayout.SinglePage:
       viewer = (
@@ -110,6 +111,7 @@ export const Reader = () => {
           columns={1}
         />
       );
+      pageOffset = 1;
       break;
     case ReaderLayout.DoublePage:
       viewer = (
@@ -123,6 +125,7 @@ export const Reader = () => {
           columns={2}
         />
       );
+      pageOffset = 2;
       break;
     case ReaderLayout.LongStrip:
     default:
@@ -137,6 +140,7 @@ export const Reader = () => {
           observer={observer}
         />
       );
+      pageOffset = 1;
       break;
   }
 
@@ -152,6 +156,7 @@ export const Reader = () => {
         <ReaderToolbar
           currentPage={currentPage}
           numPages={numPages}
+          nextPageOffset={pageOffset}
           setCurrentPageAction={(page) => {
             setCurrentPage(page);
             virtuoso.current?.scrollToIndex({

@@ -18,9 +18,11 @@ export const ReaderToolbar = ({
   currentPage,
   numPages,
   setCurrentPageAction,
+  nextPageOffset = 1,
 }: {
   currentPage: number;
   numPages: number;
+  nextPageOffset: number;
   setCurrentPageAction: (i: number) => void;
 }) => {
   const { readerContext, setReaderContext } = useReader();
@@ -77,7 +79,9 @@ export const ReaderToolbar = ({
           <Button
             variant="outline"
             disabled={currentPage <= 0}
-            onClick={() => setCurrentPageAction(Math.max(currentPage - 1, 0))}
+            onClick={() =>
+              setCurrentPageAction(Math.max(currentPage - nextPageOffset, 0))
+            }
           >
             <ChevronLeft />
           </Button>
@@ -109,7 +113,9 @@ export const ReaderToolbar = ({
             variant="outline"
             disabled={currentPage >= numPages - 1}
             onClick={() =>
-              setCurrentPageAction(Math.min(currentPage + 1, numPages - 1))
+              setCurrentPageAction(
+                Math.min(currentPage + nextPageOffset, numPages - 1),
+              )
             }
           >
             <ChevronRight />
