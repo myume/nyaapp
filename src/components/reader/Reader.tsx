@@ -9,6 +9,8 @@ import { VirtuosoHandle } from "react-virtuoso";
 import { useReader } from "../providers/ReaderProvider";
 import { ReaderToolbar } from "./ReaderToolbar";
 import { useDebouncedCallback } from "use-debounce";
+import { ReaderLayout } from "@/types/LibraryEntry";
+import { PagedLayout } from "./PagedLayout";
 
 export const Reader = () => {
   const { readerContext, setReaderContext } = useReader();
@@ -94,6 +96,48 @@ export const Reader = () => {
     updateReadingProgress,
   ]);
 
+  let viewer;
+  switch (libraryEntry.metafile.settings?.reader.layout) {
+    case ReaderLayout.SinglePage:
+      viewer = (
+        <PagedLayout
+          numPages={numPages}
+          currentPage={currentPage}
+          libraryEntry={libraryEntry}
+          fileIndex={fileIndex}
+          dimensions={dimensions}
+          columns={1}
+        />
+      );
+      break;
+    case ReaderLayout.DoublePage:
+      viewer = (
+        <PagedLayout
+          numPages={numPages}
+          currentPage={currentPage}
+          libraryEntry={libraryEntry}
+          fileIndex={fileIndex}
+          dimensions={dimensions}
+          columns={2}
+        />
+      );
+      break;
+    case ReaderLayout.LongStrip:
+    default:
+      viewer = (
+        <LongStripLayout
+          numPages={numPages}
+          currentPage={currentPage}
+          virtuoso={virtuoso}
+          libraryEntry={libraryEntry}
+          fileIndex={fileIndex}
+          dimensions={dimensions}
+          observer={observer}
+        />
+      );
+      break;
+  }
+
   return (
     <div
       className="relative"
@@ -115,15 +159,7 @@ export const Reader = () => {
           }}
         />
       </div>
-      <LongStripLayout
-        numPages={numPages}
-        currentPage={currentPage}
-        virtuoso={virtuoso}
-        libraryEntry={libraryEntry}
-        fileIndex={fileIndex}
-        dimensions={dimensions}
-        observer={observer}
-      />
+      <div className="h-screen">{numPages > 0 && viewer}</div>
       {numPages > 0 && (
         <div className="absolute bottom-2 right-2 text-muted-foreground text-[0.7rem]">
           {currentPage + 1} / {numPages}

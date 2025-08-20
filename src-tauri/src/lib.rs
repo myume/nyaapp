@@ -46,7 +46,10 @@ pub fn run() {
                     let content = tauri::async_runtime::block_on(async {
                         state.lock().await.get_page(&id, file_num, page_num).await
                     })
-                    .unwrap();
+                    .expect(&format!(
+                        "Could not get page {} for id {} and file {}",
+                        page_num, id, file_num
+                    ));
 
                     Response::builder().status(200).body(content).unwrap()
                 }
