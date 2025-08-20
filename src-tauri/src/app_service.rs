@@ -246,11 +246,29 @@ impl AppService {
 
         log::info!("Fetching page {} from {}", page_num, filename);
 
-        self.cbz_reader
+        let page = self
+            .cbz_reader
             .lock()
             .await
-            .get(&entry.output_dir.join(filename), page_num)
-            .context(format!("Failed to find page {} for {}", page_num, filename))
+            .get(&entry.output_dir.join(filename), page_num);
+
+        let page = if page.is_none() {
+            log::info!("Failed to find page {} from {}", page_num, filename);
+            log::info!("Loading files from {}", filename);
+            self.cbz_reader
+                .lock()
+                .await
+                .load(&entry.output_dir.join(filename))?;
+
+            self.cbz_reader
+                .lock()
+                .await
+                .get(&entry.output_dir.join(filename), page_num)
+        } else {
+            page
+        };
+
+        page.context(format!("Failed to find page {} for {}", page_num, filename))
     }
 
     pub async fn update_reading_progress(
