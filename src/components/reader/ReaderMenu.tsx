@@ -54,6 +54,7 @@ export const ReaderMenu = () => {
   const updateReaderSettings: WatchObserver<z.infer<typeof settingsSchema>> =
     useCallback(
       async (values) => {
+        form.trigger();
         if (form.formState.isValid) {
           const settings = {
             ...values,
