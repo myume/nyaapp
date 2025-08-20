@@ -8,6 +8,7 @@ interface PagedLayoutProps {
   libraryEntry: LibraryEntry;
   fileIndex: number;
   dimensions: [number, number][];
+  setCurrentPage: (page: number) => void;
 }
 
 export const PagedLayout = ({
@@ -17,9 +18,22 @@ export const PagedLayout = ({
   libraryEntry,
   fileIndex,
   dimensions,
+  setCurrentPage,
 }: PagedLayoutProps) => {
   return (
-    <div className="flex justify-around items-center h-full">
+    <div className="relative flex justify-around items-center h-full">
+      <div
+        className="absolute left-0 top-0 h-screen w-1/2"
+        onClick={() => {
+          setCurrentPage(Math.max(currentPage - columns, 0));
+        }}
+      />
+      <div
+        className="absolute right-0 top-0 h-screen w-1/2"
+        onClick={() => {
+          setCurrentPage(Math.min(currentPage + columns, numPages - columns));
+        }}
+      />
       <div
         style={{
           display: "grid",

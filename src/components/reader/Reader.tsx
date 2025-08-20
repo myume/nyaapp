@@ -106,6 +106,7 @@ export const Reader = () => {
           libraryEntry={libraryEntry}
           fileIndex={fileIndex}
           dimensions={dimensions}
+          setCurrentPage={setCurrentPage}
           columns={1}
         />
       );
@@ -118,6 +119,7 @@ export const Reader = () => {
           libraryEntry={libraryEntry}
           fileIndex={fileIndex}
           dimensions={dimensions}
+          setCurrentPage={setCurrentPage}
           columns={2}
         />
       );
