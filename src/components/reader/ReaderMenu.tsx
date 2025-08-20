@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "../ui/select";
 import { LibraryEntrySettings, ReaderLayout } from "@/types/LibraryEntry";
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useDebouncedCallback } from "use-debounce";
 import { invoke } from "@tauri-apps/api/core";
 
@@ -51,35 +51,37 @@ export const ReaderMenu = () => {
     },
   });
 
-  const updateReaderSettings: WatchObserver<
-    z.infer<typeof settingsSchema>
-  > = async (values) => {
-    if (form.formState.isValid) {
-      const settings = {
-        ...values,
-        gap: parseInt(values.gap!),
-      };
-      setReaderContext((context) => {
-        const updatedContext = { ...context };
-        if (updatedContext.libraryEntry?.metafile.settings) {
-          updatedContext.libraryEntry.metafile.settings.reader =
-            settings as LibraryEntrySettings["reader"];
-        }
-        return updatedContext;
-      });
+  const updateReaderSettings: WatchObserver<z.infer<typeof settingsSchema>> =
+    useCallback(
+      async (values) => {
+        if (form.formState.isValid) {
+          const settings = {
+            ...values,
+            gap: parseInt(values.gap!),
+          };
+          setReaderContext((context) => {
+            const updatedContext = { ...context };
+            if (updatedContext.libraryEntry?.metafile.settings) {
+              updatedContext.libraryEntry.metafile.settings.reader =
+                settings as LibraryEntrySettings["reader"];
+            }
+            return updatedContext;
+          });
 
-      await invoke("update_library_entry_settings", {
-        id: libraryEntry?.metafile.source.id,
-        settings: {
-          ...libraryEntry?.metafile.settings,
-          reader: {
-            ...libraryEntry?.metafile.settings?.reader,
-            settings,
-          },
-        },
-      });
-    }
-  };
+          await invoke("update_library_entry_settings", {
+            id: libraryEntry?.metafile.source.id,
+            settings: {
+              ...libraryEntry?.metafile.settings,
+              reader: {
+                ...libraryEntry?.metafile.settings?.reader,
+                settings,
+              },
+            },
+          });
+        }
+      },
+      [form.formState.isValid, libraryEntry?.metafile, setReaderContext],
+    );
 
   const debouncedUpdate = useDebouncedCallback(updateReaderSettings, 300);
 
@@ -87,7 +89,6 @@ export const ReaderMenu = () => {
     const subscription = form.watch(debouncedUpdate);
     return () => {
       subscription.unsubscribe();
-      updateReaderSettings(form.getValues(), {});
     };
   }, [form, debouncedUpdate]);
 

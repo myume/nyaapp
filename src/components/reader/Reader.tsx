@@ -102,6 +102,7 @@ export const Reader = () => {
     filename,
     numPages,
     setReaderContext,
+    updateReadingProgress,
   ]);
 
   return (
