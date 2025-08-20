@@ -52,8 +52,10 @@ export const PagedLayout = ({
   }, [containerRef, prevPage, nextPage]);
 
   useEffect(() => {
-    const nextMultiple =
-      Math.floor(currentPage / columns) * columns + columns - 1;
+    const nextMultiple = Math.min(
+      Math.floor(currentPage / columns) * columns + columns - 1,
+      numPages - 1,
+    );
     if (nextMultiple !== currentPage) {
       setCurrentPage(nextMultiple);
     }
