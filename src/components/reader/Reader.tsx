@@ -11,6 +11,7 @@ import { ReaderToolbar } from "./ReaderToolbar";
 import { useDebouncedCallback } from "use-debounce";
 import { ReaderLayout } from "@/types/LibraryEntry";
 import { PagedLayout } from "./PagedLayout";
+import { Spinner } from "../ui/spinner";
 
 export const Reader = () => {
   const { readerContext, setReaderContext } = useReader();
@@ -20,6 +21,7 @@ export const Reader = () => {
 
   const filename = libraryEntry.files[fileIndex];
 
+  const [loading, setLoading] = useState(false);
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(
     libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
@@ -51,6 +53,7 @@ export const Reader = () => {
   }, []);
 
   useEffect(() => {
+    setLoading(true);
     (async () => {
       const numPages = await invoke<number>("load_cbz", {
         id: libraryEntry.metafile.source.id,
@@ -62,8 +65,9 @@ export const Reader = () => {
         fileNum: fileIndex,
       });
       setDimensions(dimensions);
+      setLoading(false);
     })();
-  }, [fileIndex, libraryEntry]);
+  }, [fileIndex, libraryEntry, setLoading]);
 
   const updateReadingProgress = useDebouncedCallback(async () => {
     await invoke("update_reading_progress", {
@@ -95,6 +99,14 @@ export const Reader = () => {
     setReaderContext,
     updateReadingProgress,
   ]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center w-full h-screen">
+        <Spinner size="large" />
+      </div>
+    );
+  }
 
   let viewer;
   let pageOffset = 1;
