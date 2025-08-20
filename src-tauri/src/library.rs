@@ -57,7 +57,7 @@ impl Library {
             LibraryEntry {
                 metafile,
                 name,
-                files: read_files_from_dir(&output_dir).await?,
+                files: Library::get_files(&output_dir).await?,
                 output_dir,
             },
         );
@@ -72,6 +72,15 @@ impl Library {
         self.entries.values().cloned().collect()
     }
 
+    async fn get_files(entry_path: &Path) -> Result<Vec<String>> {
+        let mut files = read_files_from_dir(entry_path).await?;
+        files.sort();
+        Ok(files
+            .into_iter()
+            .filter(|file| !file.ends_with(".torrent") && file != ".meta")
+            .collect())
+    }
+
     async fn fetch_library(library_dir: &Path) -> Result<HashMap<String, LibraryEntry>> {
         info!("Fetching library...");
         let mut library = HashMap::new();
@@ -83,20 +92,13 @@ impl Library {
 
             let metafile = Metafile::read(&dir.path()).await?;
 
-            let mut files = read_files_from_dir(&dir.path()).await?;
-            files.sort();
-            files = files
-                .into_iter()
-                .filter(|file| !file.ends_with(".torrent") && file != ".meta")
-                .collect();
-
             library.insert(
                 metafile.source.id.clone(),
                 LibraryEntry {
                     name: dir.file_name().to_string_lossy().to_string(),
                     metafile,
                     output_dir: dir.path(),
-                    files,
+                    files: Library::get_files(&dir.path()).await?,
                 },
             );
         }
