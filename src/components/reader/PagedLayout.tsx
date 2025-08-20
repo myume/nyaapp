@@ -1,6 +1,7 @@
 import { LibraryEntry } from "@/types/LibraryEntry";
 import Image from "next/image";
-import { useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
+import { useDebouncedCallback } from "use-debounce";
 
 interface PagedLayoutProps {
   numPages: number;
@@ -21,6 +22,35 @@ export const PagedLayout = ({
   dimensions,
   setCurrentPage,
 }: PagedLayoutProps) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+
+  const prevPage = useCallback(() => {
+    setCurrentPage(Math.max(currentPage - columns, columns - 1));
+  }, [currentPage, columns]);
+
+  const nextPage = useCallback(() => {
+    setCurrentPage(Math.min(currentPage + columns, numPages - 1));
+  }, [currentPage, columns]);
+
+  const scrollToNavigate = useDebouncedCallback((event) => {
+    event.preventDefault();
+
+    if (event.deltaY < 0) {
+      prevPage();
+    } else {
+      nextPage();
+    }
+  }, 100);
+
+  useEffect(() => {
+    containerRef.current?.addEventListener("wheel", scrollToNavigate, {
+      passive: false,
+    });
+    return () => {
+      containerRef.current?.removeEventListener("wheel", scrollToNavigate);
+    };
+  }, [containerRef, prevPage, nextPage]);
+
   useEffect(() => {
     const nextMultiple =
       Math.floor(currentPage / columns) * columns + columns - 1;
@@ -29,15 +59,11 @@ export const PagedLayout = ({
     }
   }, [currentPage, columns, setCurrentPage]);
 
-  const prevPage = () => {
-    setCurrentPage(Math.max(currentPage - columns, columns - 1));
-  };
-  const nextPage = () => {
-    setCurrentPage(Math.min(currentPage + columns, numPages - 1));
-  };
-
   return (
-    <div className="relative flex justify-around items-center h-full">
+    <div
+      ref={containerRef}
+      className="relative flex justify-around items-center h-full"
+    >
       <div
         className="absolute left-0 top-0 h-screen w-1/2"
         onClick={prevPage}
