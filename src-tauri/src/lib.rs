@@ -82,8 +82,10 @@ pub fn run() {
             commands::remove_download,
             commands::load_cbz,
             commands::update_reading_progress,
+            commands::clear_reading_progress,
             commands::update_library_entry_settings,
             commands::get_dimensions,
+            commands::mark_as_read,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

@@ -70,4 +70,15 @@ impl Reader for CBZReader {
             })
             .collect()
     }
+
+    fn num_pages(&self, path: &Path) -> Result<usize> {
+        let key = path.to_string_lossy().to_string();
+        if let Some(pages) = self.books.get(&key) {
+            return Ok(pages.len());
+        }
+
+        let file = std::fs::File::open(path)?;
+        let archive = zip::ZipArchive::new(file)?;
+        Ok(archive.len())
+    }
 }

@@ -11,4 +11,6 @@ pub trait Reader {
     fn list(&self, path: &Path) -> Option<Vec<Vec<u8>>>;
 
     fn get_dimensions(&self, path: &Path) -> Result<Vec<(u32, u32)>>;
+
+    fn num_pages(&self, path: &Path) -> Result<usize>;
 }

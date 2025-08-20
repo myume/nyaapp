@@ -8,25 +8,32 @@ import { LibraryEntry } from "@/types/LibraryEntry";
 import { invoke } from "@tauri-apps/api/core";
 import { ArrowLeft } from "lucide-react";
 import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export default function Library() {
-  const [selectedEntry, setSelectedEntry] = useState<LibraryEntry | null>(null);
-  const [fileIndex, setFileIndex] = useState<number | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<LibraryEntry>();
+  const [fileIndex, setFileIndex] = useState<number>();
   const [library, setLibrary] = useState<LibraryEntry[]>();
   const { setReaderContext } = useReader();
 
-  useEffect(() => {
-    const fetchLibrary = async () => {
-      const library = await invoke<LibraryEntry[]>("list_library");
-      library.sort((a, b) => a.name.localeCompare(b.name));
-      setLibrary(library);
-    };
-    fetchLibrary();
-  }, []);
+  const fetchLibrary = useCallback(async () => {
+    const library = await invoke<LibraryEntry[]>("list_library");
+    library.sort((a, b) => a.name.localeCompare(b.name));
+    setLibrary(library);
+    setSelectedEntry((selectedEntry) =>
+      library.find(
+        (entry) =>
+          entry.metafile.source.id === selectedEntry?.metafile.source.id,
+      ),
+    );
+  }, [setLibrary, setSelectedEntry]);
 
   useEffect(() => {
-    if (fileIndex === null || selectedEntry === null) return;
+    fetchLibrary();
+  }, [fetchLibrary]);
+
+  useEffect(() => {
+    if (fileIndex === undefined || selectedEntry === undefined) return;
 
     setReaderContext((context) => ({
       ...context,
@@ -41,7 +48,10 @@ export default function Library() {
       {selectedEntry ? (
         <div className="space-y-5">
           <div className="flex items-center gap-3">
-            <Button variant="outline" onClick={() => setSelectedEntry(null)}>
+            <Button
+              variant="outline"
+              onClick={() => setSelectedEntry(undefined)}
+            >
               <ArrowLeft />
               Back
             </Button>
@@ -50,6 +60,7 @@ export default function Library() {
           <LibraryDetails
             libraryEntry={selectedEntry}
             setFileIndex={setFileIndex}
+            fetchLibrary={fetchLibrary}
           />
         </div>
       ) : (

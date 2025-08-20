@@ -227,3 +227,31 @@ pub async fn update_library_entry_settings(
         .await
         .map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn mark_as_read(
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+    file_num: usize,
+) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .mark_as_read(&id, file_num)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+pub async fn clear_reading_progress(
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+    file_num: Option<usize>,
+) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .clear_reading_progress(&id, file_num)
+        .await
+        .map_err(|e| e.to_string())
+}

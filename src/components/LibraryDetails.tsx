@@ -2,17 +2,31 @@ import { LibraryEntry } from "@/types/LibraryEntry";
 import { Separator } from "./ui/separator";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
+import { EllipsisVertical, Eye } from "lucide-react";
+import { invoke } from "@tauri-apps/api/core";
 
 export const LibraryDetails = ({
   libraryEntry: {
     name,
     files,
-    metafile: { metadata, reading_progress },
+    metafile: {
+      metadata,
+      reading_progress,
+      source: { id },
+    },
   },
   setFileIndex,
+  fetchLibrary,
 }: {
   libraryEntry: LibraryEntry;
   setFileIndex: (fileIndex: number) => void;
+  fetchLibrary: () => void;
 }) => {
   return (
     <div className="space-y-5 p-2">
@@ -53,21 +67,43 @@ export const LibraryDetails = ({
             return (
               <li
                 className={cn(
-                  "flex gap-5 w-full items-center hover:bg-muted/80 p-2 rounded:watch transition-colors duration-200 hover:cursor-pointer",
+                  "flex w-full justify-between items-center hover:bg-muted/80 p-2 rounded transition-colors duration-200 hover:cursor-pointer",
                   progress &&
                     progress?.current_page + 1 === progress?.total_pages &&
                     "text-muted-foreground/60",
                 )}
-                onClick={() => setFileIndex(i)}
                 key={file}
               >
-                {file}
-
-                {progress && (
-                  <span className="text-muted-foreground/60 text-xs">
-                    Page {progress.current_page + 1} / {progress.total_pages}
-                  </span>
-                )}
+                <div
+                  className="flex-1 flex gap-4 items-center"
+                  onClick={() => setFileIndex(i)}
+                >
+                  <h2>{file}</h2>
+                  <h4>
+                    {progress && (
+                      <span className="text-muted-foreground/60 text-xs">
+                        Page {progress.current_page + 1} /{" "}
+                        {progress.total_pages}
+                      </span>
+                    )}
+                  </h4>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="hover:bg-background hover:cursor-pointer p-1 rounded-full aspect-square transition-colors duration-200">
+                    <EllipsisVertical className="opacity-80" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        await invoke("mark_as_read", { id, fileNum: i });
+                        fetchLibrary();
+                      }}
+                    >
+                      <Eye />
+                      Mark as Read
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </li>
             );
           })}

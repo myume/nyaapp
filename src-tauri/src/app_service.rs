@@ -283,11 +283,11 @@ impl AppService {
         file_num: usize,
         updated_page: usize,
     ) -> Result<()> {
-        let mut reader = self.cbz_reader.lock().await;
+        let reader = self.cbz_reader.lock().await;
         self.library
             .lock()
             .await
-            .update_reading_progress(id, file_num, updated_page, &mut *reader)
+            .update_reading_progress(id, file_num, updated_page, &*reader)
             .await
     }
 
@@ -321,6 +321,27 @@ impl AppService {
             .lock()
             .await
             .update_library_entry_settings(id, settings)
+            .await
+    }
+
+    pub async fn mark_as_read(&mut self, id: &str, file_num: usize) -> Result<()> {
+        let reader = self.cbz_reader.lock().await;
+        self.library
+            .lock()
+            .await
+            .mark_as_read(id, file_num, &*reader)
+            .await
+    }
+
+    pub async fn clear_reading_progress(
+        &mut self,
+        id: &str,
+        file_num: Option<usize>,
+    ) -> Result<()> {
+        self.library
+            .lock()
+            .await
+            .clear_reading_progress(id, file_num)
             .await
     }
 }

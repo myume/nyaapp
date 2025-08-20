@@ -124,7 +124,7 @@ impl Library {
         id: &str,
         file_num: usize,
         updated_page: usize,
-        reader: &mut impl Reader,
+        reader: &impl Reader,
     ) -> Result<()> {
         let entry = self
             .entries
@@ -154,13 +154,7 @@ impl Library {
                 filename.clone(),
                 ReadingProgress {
                     current_page: updated_page,
-                    // if we are loading the file in the updating_reading_progress function, it
-                    // means that the file is has already been loaded so this should be a gauranteed cache
-                    // hit. We will not read any files here, just return the number of files.
-                    // Kind of a hacky way to acheive this since it's so dependent on the order,
-                    // but for now it's a bit more elegant than reading/extracting the cbz files
-                    // just to fetch the number of files again.
-                    total_pages: reader.load(&entry.output_dir.join(filename))?,
+                    total_pages: reader.num_pages(&entry.output_dir.join(filename))?,
                 },
             );
         }
@@ -190,5 +184,55 @@ impl Library {
         entry.metafile.write(&entry.output_dir).await?;
 
         Ok(())
+    }
+
+    pub async fn clear_reading_progress(
+        &mut self,
+        id: &str,
+        file_num: Option<usize>,
+    ) -> Result<()> {
+        let entry = self
+            .entries
+            .get_mut(id)
+            .context(format!("Missing library entry for {}", id))?;
+
+        match file_num {
+            Some(file_num) => {
+                let filename = entry
+                    .files
+                    .get(file_num)
+                    .context(format!("No file at index {}", file_num))?;
+
+                log::info!("Clearing reading progress for {}", filename);
+                entry.metafile.reading_progress.remove(filename);
+            }
+            None => {
+                log::info!("Clearing all reading progress for {}", entry.name);
+                entry.metafile.reading_progress.clear();
+            }
+        }
+        entry.metafile.write(&entry.output_dir).await
+    }
+
+    pub async fn mark_as_read(
+        &mut self,
+        id: &str,
+        file_num: usize,
+        reader: &impl Reader,
+    ) -> Result<()> {
+        let entry = self
+            .entries
+            .get_mut(id)
+            .context(format!("Missing library entry for {}", id))?;
+        let filename = entry
+            .files
+            .get(file_num)
+            .context(format!("No file at index {}", file_num))?;
+
+        log::info!("Marking {} as read", filename);
+
+        let total_pages = reader.num_pages(&entry.output_dir.join(filename))?;
+        self.update_reading_progress(id, file_num, total_pages - 1, reader)
+            .await
     }
 }
