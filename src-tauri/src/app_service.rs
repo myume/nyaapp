@@ -48,11 +48,12 @@ impl AppService {
 
         let library = Library::new(&library_dir).await;
 
+        let session_persistence_path = app_data_dir.join("torrent");
         let session = Session::new_with_opts(
             library_dir.clone(),
             SessionOptions {
                 persistence: Some(SessionPersistenceConfig::Json {
-                    folder: Some(app_data_dir.clone()),
+                    folder: Some(session_persistence_path.clone()),
                 }),
                 ..Default::default()
             },
@@ -61,7 +62,12 @@ impl AppService {
         .unwrap();
         let client = reqwest::Client::new();
         let torrent_service = Arc::new(Mutex::new(
-            RqbitService::new(session, client.clone(), &app_data_dir.join("session.json")).await,
+            RqbitService::new(
+                session,
+                client.clone(),
+                &session_persistence_path.join("session.json"),
+            )
+            .await,
         ));
 
         Ok(AppService {
