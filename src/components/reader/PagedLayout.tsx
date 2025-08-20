@@ -87,20 +87,21 @@ export const PagedLayout = ({
           (_, i) => {
             const pageIndex = currentPage - i;
             return (
-              <Image
-                key={i}
-                src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${pageIndex}`}
-                alt={`Page ${pageIndex + 1}`}
-                style={{
-                  objectFit: "contain",
-                  maxHeight: "100vh",
-                  maxWidth: "100%",
-                }}
-                className="h-auto w-auto my-auto"
-                height={dimensions[pageIndex]?.[1] || 1000}
-                width={dimensions[pageIndex]?.[0] || 500}
-                quality={100}
-              />
+              <div key={i} className="flex justify-center items-center">
+                <Image
+                  src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${pageIndex}`}
+                  alt={`Page ${pageIndex + 1}`}
+                  style={{
+                    objectFit: "contain",
+                    maxHeight: "100vh",
+                    maxWidth: "100%",
+                  }}
+                  className="h-auto w-auto"
+                  height={dimensions[pageIndex]?.[1] || 1000}
+                  width={dimensions[pageIndex]?.[0] || 500}
+                  quality={100}
+                />
+              </div>
             );
           },
         ).reverse()}
