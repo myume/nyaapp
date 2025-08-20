@@ -87,7 +87,7 @@ export const PagedLayout = ({
           (_, i) => {
             const pageIndex = currentPage - i;
             return (
-              <div key={i} className="flex justify-center items-center">
+              <div key={`${i}-${pageIndex}`} className="flex items-center">
                 <Image
                   src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${pageIndex}`}
                   alt={`Page ${pageIndex + 1}`}
@@ -100,6 +100,12 @@ export const PagedLayout = ({
                   height={dimensions[pageIndex]?.[1] || 1000}
                   width={dimensions[pageIndex]?.[0] || 500}
                   quality={100}
+                  onLoad={(e) => {
+                    e.currentTarget.hidden = false;
+                  }}
+                  onError={(e) => {
+                    e.currentTarget.hidden = true;
+                  }}
                 />
               </div>
             );
