@@ -13,12 +13,27 @@ import { useDebouncedCallback } from "use-debounce";
 import { ReaderLayout } from "@/types/LibraryEntry";
 import { PagedLayout } from "./PagedLayout";
 import { Spinner } from "../ui/spinner";
+import { Button } from "../ui/button";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export const Reader = () => {
   const { readerContext, setReaderContext } = useReader();
+  const router = useRouter();
   let { libraryEntry, fileIndex } = readerContext;
-  libraryEntry = libraryEntry!;
-  fileIndex = fileIndex!;
+
+  if (libraryEntry === undefined || fileIndex === undefined) {
+    return (
+      <div className="p-10 flex justify-center items-center h-screen w-full">
+        <p>
+          Nothing to read. Select an entry from your{" "}
+          <Link href="/library" className="underline">
+            library
+          </Link>
+        </p>
+      </div>
+    );
+  }
 
   const filename = libraryEntry.files[fileIndex];
 
@@ -101,10 +116,12 @@ export const Reader = () => {
     return () => {
       setReaderContext((context) => {
         const updatedContext = { ...context };
-        updatedContext.libraryEntry!.metafile.reading_progress[filename] = {
-          current_page: currentPage,
-          total_pages: numPages,
-        };
+        if (updatedContext.libraryEntry) {
+          updatedContext.libraryEntry.metafile.reading_progress[filename] = {
+            current_page: currentPage,
+            total_pages: numPages,
+          };
+        }
         return updatedContext;
       });
     };
@@ -120,8 +137,17 @@ export const Reader = () => {
 
   if (error) {
     return (
-      <div className="flex items-center justify-center w-full h-screen">
+      <div className="flex flex-col items-center justify-center w-full h-screen gap-4">
         <p className="text-red-500">{error}</p>
+        <Button
+          variant="secondary"
+          onClick={() => {
+            router.replace("/library");
+            setReaderContext({});
+          }}
+        >
+          Back to Library
+        </Button>
       </div>
     );
   }
