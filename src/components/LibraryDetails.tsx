@@ -8,7 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
-import { EllipsisVertical, Eye } from "lucide-react";
+import { EllipsisVertical, Eraser, Eye } from "lucide-react";
 import { invoke } from "@tauri-apps/api/core";
 
 export const LibraryDetails = ({
@@ -101,6 +101,18 @@ export const LibraryDetails = ({
                     >
                       <Eye />
                       Mark as Read
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        await invoke("clear_reading_progress", {
+                          id,
+                          fileNum: i,
+                        });
+                        fetchLibrary();
+                      }}
+                    >
+                      <Eraser />
+                      Clear Reading Progress
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
