@@ -60,6 +60,9 @@ export const Reader = () => {
         fileNum: fileIndex,
       });
       setNumPages(numPages);
+      setCurrentPage(
+        libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
+      );
       const dimensions = await invoke<[number, number][]>("get_dimensions", {
         id: libraryEntry.metafile.source.id,
         fileNum: fileIndex,
