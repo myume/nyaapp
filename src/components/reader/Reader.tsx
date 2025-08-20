@@ -15,25 +15,13 @@ import { PagedLayout } from "./PagedLayout";
 import { Spinner } from "../ui/spinner";
 import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export const Reader = () => {
   const { readerContext, setReaderContext } = useReader();
   const router = useRouter();
   let { libraryEntry, fileIndex } = readerContext;
-
-  if (libraryEntry === undefined || fileIndex === undefined) {
-    return (
-      <div className="p-10 flex justify-center items-center h-screen w-full">
-        <p>
-          Nothing to read. Select an entry from your{" "}
-          <Link href="/library" className="underline">
-            library
-          </Link>
-        </p>
-      </div>
-    );
-  }
+  libraryEntry = libraryEntry!;
+  fileIndex = fileIndex!;
 
   const filename = libraryEntry.files[fileIndex];
 
@@ -95,7 +83,7 @@ export const Reader = () => {
       }
     };
     loadPages();
-  }, [fileIndex, libraryEntry, setLoading]);
+  }, [fileIndex, libraryEntry, setLoading, filename]);
 
   const updateReadingProgress = useDebouncedCallback(async () => {
     try {

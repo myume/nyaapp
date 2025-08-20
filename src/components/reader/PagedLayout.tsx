@@ -26,11 +26,11 @@ export const PagedLayout = ({
 
   const prevPage = useCallback(() => {
     setCurrentPage(Math.max(currentPage - columns, columns - 1));
-  }, [currentPage, columns]);
+  }, [currentPage, columns, setCurrentPage]);
 
   const nextPage = useCallback(() => {
     setCurrentPage(Math.min(currentPage + columns, numPages - 1));
-  }, [currentPage, columns]);
+  }, [currentPage, columns, setCurrentPage, numPages]);
 
   const scrollToNavigate = useDebouncedCallback((event) => {
     if (event.deltaY < 0) {
@@ -41,13 +41,14 @@ export const PagedLayout = ({
   }, 100);
 
   useEffect(() => {
-    containerRef.current?.addEventListener("wheel", scrollToNavigate, {
+    const ref = containerRef.current;
+    ref?.addEventListener("wheel", scrollToNavigate, {
       passive: true,
     });
     return () => {
-      containerRef.current?.removeEventListener("wheel", scrollToNavigate);
+      ref?.removeEventListener("wheel", scrollToNavigate);
     };
-  }, [containerRef, prevPage, nextPage]);
+  }, [containerRef, prevPage, nextPage, scrollToNavigate]);
 
   useEffect(() => {
     const nextMultiple = Math.min(
@@ -57,7 +58,7 @@ export const PagedLayout = ({
     if (nextMultiple !== currentPage) {
       setCurrentPage(nextMultiple);
     }
-  }, [currentPage, columns, setCurrentPage]);
+  }, [currentPage, columns, setCurrentPage, numPages]);
 
   return (
     <div
