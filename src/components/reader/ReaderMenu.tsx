@@ -81,7 +81,7 @@ export const ReaderMenu = () => {
           });
         }
       },
-      [form.formState.isValid, libraryEntry?.metafile, setReaderContext],
+      [form, libraryEntry?.metafile, setReaderContext],
     );
 
   const debouncedUpdate = useDebouncedCallback(updateReaderSettings, 300);
