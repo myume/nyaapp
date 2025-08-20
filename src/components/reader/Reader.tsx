@@ -1,7 +1,7 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
-import { info } from "@tauri-apps/plugin-log";
+import { info, error as logError } from "@tauri-apps/plugin-log";
 
 import { useEffect, useRef, useState } from "react";
 import { LongStripLayout } from "./LongStripLayout";
@@ -24,6 +24,7 @@ export const Reader = () => {
 
   const [loading, setLoading] = useState(false);
   const [numPages, setNumPages] = useState(0);
+  const [error, setError] = useState<string | undefined>(undefined);
   const [currentPage, setCurrentPage] = useState(
     libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
   );
@@ -54,33 +55,44 @@ export const Reader = () => {
   }, []);
 
   useEffect(() => {
-    setLoading(true);
-    (async () => {
-      info("Loading pages...");
-      const numPages = await invoke<number>("load_cbz", {
-        id: libraryEntry.metafile.source.id,
-        fileNum: fileIndex,
-      });
-      setNumPages(numPages);
-      setCurrentPage(
-        libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
-      );
-      const dimensions = await invoke<[number, number][]>("get_dimensions", {
-        id: libraryEntry.metafile.source.id,
-        fileNum: fileIndex,
-      });
-      setDimensions(dimensions);
-      setLoading(false);
-    })();
+    const loadPages = async () => {
+      setLoading(true);
+      setError(undefined);
+      try {
+        info("Loading pages...");
+        const numPages = await invoke<number>("load_cbz", {
+          id: libraryEntry.metafile.source.id,
+          fileNum: fileIndex,
+        });
+        setNumPages(numPages);
+        setCurrentPage(
+          libraryEntry.metafile.reading_progress[filename]?.current_page ?? 0,
+        );
+        const dimensions = await invoke<[number, number][]>("get_dimensions", {
+          id: libraryEntry.metafile.source.id,
+          fileNum: fileIndex,
+        });
+        setDimensions(dimensions);
+      } catch (e) {
+        setError(`Failed to load pages: ${e}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadPages();
   }, [fileIndex, libraryEntry, setLoading]);
 
   const updateReadingProgress = useDebouncedCallback(async () => {
-    info("Restoring reading progress...");
-    await invoke("update_reading_progress", {
-      id: libraryEntry.metafile.source.id,
-      fileNum: fileIndex,
-      updatedPage: currentPage,
-    });
+    try {
+      info("Restoring reading progress...");
+      await invoke("update_reading_progress", {
+        id: libraryEntry.metafile.source.id,
+        fileNum: fileIndex,
+        updatedPage: currentPage,
+      });
+    } catch (e) {
+      logError(e as string);
+    }
   }, 500);
 
   useEffect(() => {
@@ -105,6 +117,14 @@ export const Reader = () => {
     setReaderContext,
     updateReadingProgress,
   ]);
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center w-full h-screen">
+        <p className="text-red-500">{error}</p>
+      </div>
+    );
+  }
 
   if (loading) {
     return (

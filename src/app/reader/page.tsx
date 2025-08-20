@@ -36,7 +36,7 @@ export default function ReaderPage() {
   if (message !== undefined) {
     return (
       <div className="p-10 flex justify-center items-center h-screen w-full">
-        <p>{message}</p>
+        <p>{message ?? "Something went wrong."}</p>
       </div>
     );
   }
