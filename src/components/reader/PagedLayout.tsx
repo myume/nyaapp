@@ -1,5 +1,6 @@
 import { LibraryEntry } from "@/types/LibraryEntry";
 import Image from "next/image";
+import { useEffect } from "react";
 
 interface PagedLayoutProps {
   numPages: number;
@@ -20,19 +21,30 @@ export const PagedLayout = ({
   dimensions,
   setCurrentPage,
 }: PagedLayoutProps) => {
+  useEffect(() => {
+    const nextMultiple =
+      Math.floor(currentPage / columns) * columns + columns - 1;
+    if (nextMultiple !== currentPage) {
+      setCurrentPage(nextMultiple);
+    }
+  }, [currentPage, columns, setCurrentPage]);
+
+  const prevPage = () => {
+    setCurrentPage(Math.max(currentPage - columns, columns - 1));
+  };
+  const nextPage = () => {
+    setCurrentPage(Math.min(currentPage + columns, numPages - 1));
+  };
+
   return (
     <div className="relative flex justify-around items-center h-full">
       <div
         className="absolute left-0 top-0 h-screen w-1/2"
-        onClick={() => {
-          setCurrentPage(Math.max(currentPage - columns, 0));
-        }}
+        onClick={prevPage}
       />
       <div
         className="absolute right-0 top-0 h-screen w-1/2"
-        onClick={() => {
-          setCurrentPage(Math.min(currentPage + columns, numPages - columns));
-        }}
+        onClick={nextPage}
       />
       <div
         style={{
@@ -41,12 +53,14 @@ export const PagedLayout = ({
         }}
       >
         {Array.from(
-          { length: Math.min(columns, numPages - currentPage) },
+          {
+            length: Math.min(columns, numPages - currentPage),
+          },
           (_, i) => {
-            const pageIndex = currentPage + i;
+            const pageIndex = Math.max(currentPage - i, 0);
             return (
               <Image
-                key={pageIndex}
+                key={i}
                 src={`pages://localhost/${libraryEntry.metafile.source.id}/${fileIndex}/${pageIndex}`}
                 alt={`Page ${pageIndex + 1}`}
                 style={{
@@ -54,7 +68,7 @@ export const PagedLayout = ({
                   maxHeight: "100vh",
                   maxWidth: "100%",
                 }}
-                className="h-auto w-auto"
+                className="h-auto w-auto my-auto"
                 height={dimensions[pageIndex]?.[1] || 1000}
                 width={dimensions[pageIndex]?.[0] || 500}
                 quality={100}
@@ -62,7 +76,7 @@ export const PagedLayout = ({
               />
             );
           },
-        )}
+        ).reverse()}
       </div>
     </div>
   );
