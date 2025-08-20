@@ -33,8 +33,6 @@ export const PagedLayout = ({
   }, [currentPage, columns]);
 
   const scrollToNavigate = useDebouncedCallback((event) => {
-    event.preventDefault();
-
     if (event.deltaY < 0) {
       prevPage();
     } else {
@@ -44,7 +42,7 @@ export const PagedLayout = ({
 
   useEffect(() => {
     containerRef.current?.addEventListener("wheel", scrollToNavigate, {
-      passive: false,
+      passive: true,
     });
     return () => {
       containerRef.current?.removeEventListener("wheel", scrollToNavigate);
