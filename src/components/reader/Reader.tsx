@@ -1,6 +1,7 @@
 "use client";
 
 import { invoke } from "@tauri-apps/api/core";
+import { info } from "@tauri-apps/plugin-log";
 
 import { useEffect, useRef, useState } from "react";
 import { LongStripLayout } from "./LongStripLayout";
@@ -55,6 +56,7 @@ export const Reader = () => {
   useEffect(() => {
     setLoading(true);
     (async () => {
+      info("Loading pages...");
       const numPages = await invoke<number>("load_cbz", {
         id: libraryEntry.metafile.source.id,
         fileNum: fileIndex,
@@ -73,6 +75,7 @@ export const Reader = () => {
   }, [fileIndex, libraryEntry, setLoading]);
 
   const updateReadingProgress = useDebouncedCallback(async () => {
+    info("Restoring reading progress...");
     await invoke("update_reading_progress", {
       id: libraryEntry.metafile.source.id,
       fileNum: fileIndex,

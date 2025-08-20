@@ -100,7 +100,6 @@ export const PagedLayout = ({
                 height={dimensions[pageIndex]?.[1] || 1000}
                 width={dimensions[pageIndex]?.[0] || 500}
                 quality={100}
-                priority
               />
             );
           },
