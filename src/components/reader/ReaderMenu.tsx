@@ -90,8 +90,9 @@ export const ReaderMenu = () => {
     const subscription = form.watch(debouncedUpdate);
     return () => {
       subscription.unsubscribe();
+      updateReaderSettings(form.getValues(), {});
     };
-  }, [form, debouncedUpdate]);
+  }, [form, updateReaderSettings, debouncedUpdate]);
 
   return (
     <Form {...form}>
