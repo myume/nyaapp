@@ -1,8 +1,4 @@
-# This workflow will do a clean installation of node dependencies, cache/restore them, build the source code and run tests across different versions of node
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-nodejs
-
-name: Node.js CI
-
+name: CI
 on:
   push:
     branches: [ "main" ]
@@ -10,19 +6,57 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  build-rust:
     runs-on: ubuntu-latest
-    
     steps:
-    - uses: actions/checkout@v4
-    - name: Setup Node.js
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libfontconfig-dev libglib2.0-dev libgtk-3-dev libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libsoup-3.0-dev
+
+    - name: Setup just
+      uses: extractions/setup-just@v3
+
+    - name: Pull Metadata DB
+      run: just pull-meta
+
+    - name: Check
+      working-directory: src-tauri
+      run: cargo check
+
+    - name: Test
+      working-directory: src-tauri
+      run: cargo test
+
+    - name: Build
+      working-directory: src-tauri
+      run: cargo build --release
+
+  build-web:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Setup Node
       uses: actions/setup-node@v4
       with:
+        node-version: 'lts/*'
         cache: 'npm'
+
     - name: Install dependencies
       run: npm ci
-    - name: Lint
-      run: npm run lint -w src
-    - name: Build
-      run: npm run tauri build
 
+    - name: Lint
+      working-directory: src
+      run: npm run lint
+
+    - name: Build NextJS
+      working-directory: src
+      run: npm run build
