@@ -3,6 +3,8 @@
 The Nyaa App (Nyaapp) is an all in one client for Nyaa that allows you to
 browse, download, and read literature.
 
+[![CI](https://github.com/myume/nyaapp/actions/workflows/CI.yml/badge.svg)](https://github.com/myume/nyaapp/actions/workflows/CI.yml)
+
 ## Features
 
 - Enhanced browsing experience for literature on Nyaa
