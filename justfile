@@ -4,6 +4,9 @@ DB_DIR:="src-tauri/db"
 default:
     npm run tauri dev
 
+build:
+    npm run tauri build
+
 pull-meta:
     mkdir -p {{DB_DIR}}
     curl {{METADATA_URL}} --output {{DB_DIR}}/series.sqlite.tar.gz
