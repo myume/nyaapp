@@ -1,0 +1,26 @@
+{
+  "name": "nyaapp",
+  "version": "1.0.0",
+  "description": "The Nyaa App (Nyaapp) is an all in one client for Nyaa that allows you to browse, download, and read literature.",
+  "main": "index.js",
+  "workspaces": [
+    "src"
+  ],
+  "scripts": {
+    "tauri": "tauri"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/myume/nyaapp.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/myume/nyaapp/issues"
+  },
+  "homepage": "https://github.com/myume/nyaapp#readme",
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.8.1"
+  }
+}

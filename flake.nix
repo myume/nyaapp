@@ -18,7 +18,6 @@
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
           nodejs
-          cargo-tauri
           rustfmt
 
           just

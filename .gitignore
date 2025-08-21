@@ -1,6 +1,7 @@
 .direnv
 .envrc
 .env
+node_modules
 
 
 # Added by cargo

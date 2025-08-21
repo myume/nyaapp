@@ -2,7 +2,7 @@ METADATA_URL:="https://api.mangabaka.dev/v1/database/series.sqlite.tar.gz"
 DB_DIR:="src-tauri/db"
 
 default:
-    cargo-tauri dev
+    npm run tauri dev
 
 pull-meta:
     mkdir -p {{DB_DIR}}
