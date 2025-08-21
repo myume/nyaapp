@@ -26,10 +26,6 @@ jobs:
     - name: Pull Metadata DB
       run: just pull-meta
 
-    - name: Check
-      working-directory: src-tauri
-      run: cargo check
-
     - name: Test
       working-directory: src-tauri
       run: cargo test
