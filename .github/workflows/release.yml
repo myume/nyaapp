@@ -55,6 +55,9 @@ jobs:
       - name: install frontend dependencies
         run: npm ci
 
+      - name: Pull Metadata DB
+        run: just pull-meta
+
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
