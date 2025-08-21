@@ -8,12 +8,27 @@ on:
 jobs:
   build-rust:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src-tauri
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
 
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
+
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+          src-tauri/target/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
     - name: Install system dependencies
       run: |
@@ -27,15 +42,17 @@ jobs:
       run: just pull-meta
 
     - name: Test
-      working-directory: src-tauri
-      run: cargo test
+      run: cargo test --release
 
     - name: Build
-      working-directory: src-tauri
       run: cargo build --release
 
   build-web:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: src
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -50,9 +67,7 @@ jobs:
       run: npm ci
 
     - name: Lint
-      working-directory: src
       run: npm run lint
 
     - name: Build NextJS
-      working-directory: src
       run: npm run build
