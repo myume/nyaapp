@@ -4,6 +4,7 @@ The Nyaa App (Nyaapp) is an all in one client for Nyaa that allows you to
 browse, download, and read literature.
 
 [![CI](https://github.com/myume/nyaapp/actions/workflows/CI.yml/badge.svg)](https://github.com/myume/nyaapp/actions/workflows/CI.yml)
+[![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/myume/nyaapp)](https://github.com/myume/nyaapp/releases)
 
 ## Features
 
@@ -81,8 +82,7 @@ npm run tauri build
 
 ## Download
 
-idk, distributing software is hard man. just build it yourself until i figure
-this part out.
+Check out the latest [release](https://github.com/myume/nyaapp/releases). If your platform doesn't have prebuilt binaries, you may need to build the application yourself.
 
 ## Data Attribution
 
