@@ -363,7 +363,7 @@ mod tests {
     )]
     #[case(
         "I’m the Evil Lord of an Intergalactic Empire! Vol 02 (Audiobook) [Troglodyte]", // stupid apostrophe
-        "i’m the evil lord of an intergalactic empire!"
+        "i'm the evil lord of an intergalactic empire!"
     )]
     fn test_normalize_title(#[case] title: &str, #[case] expected: &str) {
         let nyaa = Nyaa::new(
