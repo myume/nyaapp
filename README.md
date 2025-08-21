@@ -60,7 +60,8 @@ just
 ```
 
 We are using SQLx which requires the DATABASE_URL env var to be set for local
-developement.
+developement. This step is optional. If you don't want to download the db
+locally for type checking, you can just set `SQLX_OFFLINE=true`.
 
 There is a script in the justfile which downloads the metadata db and sets the
 var. If you have [just](https://github.com/casey/just) installed, you can use

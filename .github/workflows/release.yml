@@ -55,15 +55,10 @@ jobs:
       - name: install frontend dependencies
         run: npm ci
 
-      - name: Setup just
-        uses: extractions/setup-just@v3
-
-      - name: Pull Metadata DB
-        run: just pull-meta
-
       - uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SQLX_OFFLINE: true
         with:
           tagName: app-v__VERSION__ 
           releaseName: "Nyaapp v__VERSION__"
