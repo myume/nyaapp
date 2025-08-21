@@ -55,6 +55,9 @@ jobs:
       - name: install frontend dependencies
         run: npm ci
 
+      - name: Setup just
+        uses: extractions/setup-just@v3
+
       - name: Pull Metadata DB
         run: just pull-meta
 
