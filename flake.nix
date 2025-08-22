@@ -15,6 +15,8 @@
     flake-utils.lib.eachDefaultSystem (system: let
       pkgs = nixpkgs.legacyPackages.${system};
     in {
+      packages = import ./nix/packages.nix {inherit pkgs;};
+
       devShells.default = pkgs.mkShell {
         packages = with pkgs; [
           nodejs
