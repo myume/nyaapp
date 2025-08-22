@@ -18,18 +18,16 @@ pub mod utils;
 pub fn run() {
     tauri::Builder::default()
         .setup(|app| {
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        // logging for rqbit is quite verbose so im turning it off here...
-                        .level_for("librqbit_dht", log::LevelFilter::Off)
-                        .level_for("librqbit_tracker_comms", log::LevelFilter::Off)
-                        .level_for("librqbit", log::LevelFilter::Off)
-                        .level_for("tracing", log::LevelFilter::Off)
-                        .build(),
-                )?;
-            }
+            app.handle().plugin(
+                tauri_plugin_log::Builder::default()
+                    .level(log::LevelFilter::Info)
+                    // logging for rqbit is quite verbose so im turning it off here...
+                    .level_for("librqbit_dht", log::LevelFilter::Off)
+                    .level_for("librqbit_tracker_comms", log::LevelFilter::Off)
+                    .level_for("librqbit", log::LevelFilter::Off)
+                    .level_for("tracing", log::LevelFilter::Off)
+                    .build(),
+            )?;
             let app_service = tauri::async_runtime::block_on(async {
                 let app_dir = app.path().app_data_dir().expect("data dir is missing");
                 AppService::new(app_dir).await
