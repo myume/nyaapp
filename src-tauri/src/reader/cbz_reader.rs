@@ -33,9 +33,12 @@ impl Reader for CBZReader {
         let file = std::fs::File::open(path)?;
         let mut archive = zip::ZipArchive::new(file)?;
 
+        let mut file_names: Vec<String> = archive.file_names().map(String::from).collect();
+        file_names.sort();
+
         let mut pages = Vec::new();
-        for i in 0..archive.len() {
-            let mut file = archive.by_index(i).unwrap();
+        for filename in file_names {
+            let mut file = archive.by_name(&filename).unwrap();
             let mut content = Vec::new();
             file.read_to_end(&mut content)?;
             pages.push(content);
