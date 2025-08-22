@@ -90,7 +90,10 @@ impl Library {
         while let Ok(Some(dir)) = children.next_entry().await {
             info!("Found: {}", dir.path().display());
 
-            let metafile = Metafile::read(&dir.path()).await?;
+            let Ok(metafile) = Metafile::read(&dir.path()).await else {
+                log::error!("Failed to read metadata for {}", dir.path().display());
+                continue;
+            };
 
             library.insert(
                 metafile.source.id.clone(),
