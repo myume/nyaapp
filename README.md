@@ -82,7 +82,34 @@ npm run tauri build
 
 ## Download
 
-Check out the latest [release](https://github.com/myume/nyaapp/releases). If your platform doesn't have prebuilt binaries, you may need to build the application yourself.
+Check out the latest [release](https://github.com/myume/nyaapp/releases). If
+your platform doesn't have prebuilt binaries, you may need to build the
+application yourself.
+
+There is a provided flake which packages the application. You can use the flake
+as an input in your config as so:
+
+```nix
+{
+  ...
+
+  inputs = {
+    ...
+    nyaapp = {
+      url = "github:myume/nyaapp";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
+
+  ...
+}
+```
+
+And then you can declare the package with
+
+```nix
+inputs.nyaapp.packages.${pkgs.system}.default
+```
 
 ## Data Attribution
 
