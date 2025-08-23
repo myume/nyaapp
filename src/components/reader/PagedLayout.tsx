@@ -2,6 +2,7 @@ import { LibraryEntry } from "@/types/LibraryEntry";
 import Image from "next/image";
 import { useCallback, useEffect, useRef } from "react";
 import { useDebouncedCallback } from "use-debounce";
+import { useReader } from "../providers/ReaderProvider";
 
 interface PagedLayoutProps {
   numPages: number;
@@ -22,6 +23,7 @@ export const PagedLayout = ({
   dimensions,
   setCurrentPage,
 }: PagedLayoutProps) => {
+  const { setReaderContext } = useReader();
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const prevPage = useCallback(() => {
@@ -40,15 +42,50 @@ export const PagedLayout = ({
     }
   }, 100);
 
+  const handleKeybinds = useCallback(
+    (e: KeyboardEvent) => {
+      switch (e.key) {
+        case "ArrowDown":
+        case "j":
+          setReaderContext((context) => ({
+            ...context,
+            fileIndex: Math.min(
+              (context.fileIndex ?? 0) + 1,
+              libraryEntry.files.length - 1,
+            ),
+          }));
+          break;
+        case "ArrowUp":
+        case "k":
+          setReaderContext((context) => ({
+            ...context,
+            fileIndex: Math.max((context.fileIndex ?? 0) - 1, 0),
+          }));
+          break;
+        case "ArrowRight":
+        case "l":
+          nextPage();
+          break;
+        case "ArrowLeft":
+        case "h":
+          prevPage();
+          break;
+      }
+    },
+    [nextPage, prevPage, setReaderContext, libraryEntry],
+  );
+
   useEffect(() => {
     const ref = containerRef.current;
     ref?.addEventListener("wheel", scrollToNavigate, {
       passive: true,
     });
+    window.addEventListener("keydown", handleKeybinds);
     return () => {
       ref?.removeEventListener("wheel", scrollToNavigate);
+      window.removeEventListener("keydown", handleKeybinds);
     };
-  }, [containerRef, prevPage, nextPage, scrollToNavigate]);
+  }, [containerRef, scrollToNavigate, handleKeybinds]);
 
   useEffect(() => {
     const nextMultiple = Math.min(
