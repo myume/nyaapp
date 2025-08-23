@@ -60,11 +60,13 @@ export const ReaderMenu = () => {
             ...values,
             gap: parseInt(values.gap!),
           };
+
           setReaderContext((context) => {
             const updatedContext = { ...context };
-            if (updatedContext.libraryEntry?.metafile.settings) {
-              updatedContext.libraryEntry.metafile.settings.reader =
-                settings as LibraryEntrySettings["reader"];
+            if (updatedContext.libraryEntry) {
+              updatedContext.libraryEntry.metafile.settings = {
+                reader: settings as LibraryEntrySettings["reader"],
+              };
             }
             return updatedContext;
           });
@@ -75,7 +77,7 @@ export const ReaderMenu = () => {
               ...libraryEntry?.metafile.settings,
               reader: {
                 ...libraryEntry?.metafile.settings?.reader,
-                settings,
+                ...settings,
               },
             },
           });
