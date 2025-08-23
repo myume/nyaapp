@@ -13,6 +13,7 @@ import {
 import { ReaderMenu } from "./ReaderMenu";
 import { Select, SelectContent, SelectItem, SelectTrigger } from "../ui/select";
 import { SelectValue } from "@radix-ui/react-select";
+import { SidebarTrigger } from "../ui/sidebar";
 
 export const ReaderToolbar = ({
   currentPage,
@@ -42,6 +43,7 @@ export const ReaderToolbar = ({
 
   return (
     <div className="bg-background/90 px-4 py-2 flex items-center gap-5 text-xs">
+      <SidebarTrigger />
       <div className="min-w-0">
         <Select
           defaultValue={
