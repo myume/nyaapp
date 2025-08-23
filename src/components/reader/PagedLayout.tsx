@@ -27,11 +27,25 @@ export const PagedLayout = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   const prevPage = useCallback(() => {
-    setCurrentPage(Math.max(currentPage - columns, columns - 1));
+    if (currentPage - columns < columns - 1) {
+      setReaderContext((context) => ({
+        ...context,
+        fileIndex: Math.max(fileIndex - 1, 0),
+      }));
+    } else {
+      setCurrentPage(Math.max(currentPage - columns, columns - 1));
+    }
   }, [currentPage, columns, setCurrentPage]);
 
   const nextPage = useCallback(() => {
-    setCurrentPage(Math.min(currentPage + columns, numPages - 1));
+    if (currentPage === numPages - 1) {
+      setReaderContext((context) => ({
+        ...context,
+        fileIndex: Math.min(fileIndex + 1, libraryEntry.files.length - 1),
+      }));
+    } else {
+      setCurrentPage(Math.min(currentPage + columns, numPages - 1));
+    }
   }, [currentPage, columns, setCurrentPage, numPages]);
 
   const scrollToNavigate = useDebouncedCallback((event) => {
