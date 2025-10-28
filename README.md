@@ -22,15 +22,11 @@ Tachiyomi for downloading locally.
 Obviously I still need to figure out the tracking aspect.
 
 ## Screenshots
-
-<img width="3810" height="2073" alt="image" src="https://github.com/user-attachments/assets/0fa26685-b133-42ff-9504-00297d1e5f60" />
-<img width="3810" height="2073" alt="image" src="https://github.com/user-attachments/assets/52369dd2-130f-4a29-9b32-8acecd76e1b0" />
-<img width="3810" height="2073" alt="image" src="https://github.com/user-attachments/assets/9a0a815d-7915-40d6-b85f-b7dfec3f4f81" />
-<img width="3810" height="2073" alt="image" src="https://github.com/user-attachments/assets/46d189ab-7eef-4160-824e-6d92a6f5b63a" />
-<img width="3810" height="2073" alt="image" src="https://github.com/user-attachments/assets/bb30e84e-3799-4bbd-b529-21af50974968" />
-<img width="3810" height="2073" alt="image" src="https://github.com/user-attachments/assets/825ef117-d071-406e-8f9c-803657c9437f" />
-<img width="3807" height="2064" alt="image" src="https://github.com/user-attachments/assets/53b0d43c-ae98-4455-a761-e2d4eca53e1f" />
-<img width="3810" height="2073" alt="image" src="https://github.com/user-attachments/assets/9001d858-2b5c-499e-8d6d-ef42f3b3cac8" />
+| <img src="https://github.com/user-attachments/assets/0fa26685-b133-42ff-9504-00297d1e5f60" width="800"/> | <img src="https://github.com/user-attachments/assets/52369dd2-130f-4a29-9b32-8acecd76e1b0" width="800"/> |
+| :---: | :---: |
+| <img src="https://github.com/user-attachments/assets/9a0a815d-7915-40d6-b85f-b7dfec3f4f81" width="800"/> | <img src="https://github.com/user-attachments/assets/46d189ab-7eef-4160-824e-6d92a6f5b63a" width="800"/> |
+| <img src="https://github.com/user-attachments/assets/bb30e84e-3799-4bbd-b529-21af50974968" width="800"/> | <img src="https://github.com/user-attachments/assets/825ef117-d071-406e-8f9c-803657c9437f" width="800"/> |
+| <img src="https://github.com/user-attachments/assets/53b0d43c-ae98-4455-a761-e2d4eca53e1f" width="800"/> | <img src="https://github.com/user-attachments/assets/9001d858-2b5c-499e-8d6d-ef42f3b3cac8" width="800"/> |
 
 ## Getting Started
 
