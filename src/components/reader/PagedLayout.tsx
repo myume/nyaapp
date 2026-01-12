@@ -124,12 +124,7 @@ export const PagedLayout = ({
         className="absolute right-0 top-0 h-screen w-1/2"
         onClick={nextPage}
       />
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: `repeat(${columns}, 1fr)`,
-        }}
-      >
+      <div className="flex">
         {Array.from(
           {
             length: Math.min(columns, numPages - currentPage),
