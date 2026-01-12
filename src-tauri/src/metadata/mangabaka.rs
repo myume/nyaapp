@@ -158,8 +158,8 @@ impl MetadataProvider for Mangabaka {
             r#"SELECT
                 series.id as "id!",
                 series.title as "title!",
-                cover_default as "cover",
-                cover_raw as "cover_raw",
+                cover_x250_x2 as "cover",
+                cover_raw_url as "cover_raw",
                 authors as "authors",
                 artists as "artists",
                 description as "description",

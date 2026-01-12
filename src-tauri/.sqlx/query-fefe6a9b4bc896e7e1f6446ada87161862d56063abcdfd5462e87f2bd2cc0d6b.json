@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "SELECT\n                series.id as \"id!\",\n                series.title as \"title!\",\n                cover_default as \"cover\",\n                cover_raw as \"cover_raw\",\n                authors as \"authors\",\n                artists as \"artists\",\n                description as \"description\",\n                genres as \"genres\",\n                type as \"media_type!\",\n                year as \"year\",\n                status as \"status!\",\n                tags as \"tags\"\n            FROM series_fts \n            JOIN series ON series_fts.rowid = series.id\n            WHERE series_fts MATCH $1 AND merged_with IS NULL",
+  "query": "SELECT\n                series.id as \"id!\",\n                series.title as \"title!\",\n                cover_x250_x2 as \"cover\",\n                cover_raw_url as \"cover_raw\",\n                authors as \"authors\",\n                artists as \"artists\",\n                description as \"description\",\n                genres as \"genres\",\n                type as \"media_type!\",\n                year as \"year\",\n                status as \"status!\",\n                tags as \"tags\"\n            FROM series_fts \n            JOIN series ON series_fts.rowid = series.id\n            WHERE series_fts MATCH $1 AND merged_with IS NULL",
   "describe": {
     "columns": [
       {
@@ -82,5 +82,5 @@
       true
     ]
   },
-  "hash": "2abf37e4b54ac73689a56401d504efee4835ba3608f5498bf5deb719301f849d"
+  "hash": "fefe6a9b4bc896e7e1f6446ada87161862d56063abcdfd5462e87f2bd2cc0d6b"
 }
