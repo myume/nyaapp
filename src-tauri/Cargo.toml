@@ -1,6 +1,6 @@
 [package]
 name = "nyaapp"
-version = "0.1.0"
+version = "0.1.1"
 description = "All in one client for Nyaa"
 authors = ["myu"]
 license = ""

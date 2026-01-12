@@ -1,7 +1,7 @@
 {pkgs, ...}: {
   default = pkgs.rustPlatform.buildRustPackage rec {
     pname = "nyaapp";
-    version = "0.1.0";
+    version = "0.1.1";
     src = ../.;
 
     patches = [./01-localfont.patch];
