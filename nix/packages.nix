@@ -9,7 +9,7 @@
     cargoRoot = "src-tauri";
     buildAndTestSubdir = cargoRoot;
 
-    cargoHash = "sha256-v8vcbpLRJVnxYRVkW6Bo9IuZcUtUcAFarS4PUiuaty8=";
+    cargoHash = "sha256-debyT2l8O53XqvtM/ndCU5LxziXnX+WofZrDzuXDptw=";
 
     npmDeps = pkgs.fetchNpmDeps {
       name = "${pname}-npm-deps-${version}";
