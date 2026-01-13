@@ -344,4 +344,26 @@ impl AppService {
             .clear_reading_progress(id, file_num)
             .await
     }
+
+    pub async fn update_library_entry_title(&mut self, id: &str, title: &str) -> Result<()> {
+        let info = self.source.get_info_by_id(id).await?;
+        let metadata_provider = self.get_metadata_provider_from_category(&info.category);
+        let metadata = metadata_provider
+            .fetch_metdata(title)
+            .await
+            .map_err(|err| {
+                log::warn!(
+                    "No metdata found for \"{}\": {}",
+                    info.title,
+                    err.to_string()
+                );
+                err
+            })
+            .ok();
+        self.library
+            .lock()
+            .await
+            .update_library_entry_title(id, title, metadata)
+            .await
+    }
 }

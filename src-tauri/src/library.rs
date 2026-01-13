@@ -9,6 +9,7 @@ use serde::{Deserialize, Serialize};
 use tokio::fs::{read_dir, remove_dir_all};
 
 use crate::{
+    metadata::Metadata,
     metafile::{Metafile, ReadingProgress},
     reader::Reader,
     settings::ReaderSettings,
@@ -79,6 +80,26 @@ impl Library {
             .into_iter()
             .filter(|file| !file.ends_with(".torrent") && file != ".meta")
             .collect())
+    }
+
+    pub async fn update_library_entry_title(
+        &mut self,
+        id: &str,
+        title: &str,
+        metadata: Option<Metadata>,
+    ) -> Result<()> {
+        let entry = self
+            .entries
+            .get_mut(id)
+            .context("Could not find library entry with corresponding id")?;
+
+        let new_output_dir = entry.output_dir.with_file_name(title);
+        tokio::fs::rename(&entry.output_dir, &new_output_dir).await?;
+        entry.output_dir = new_output_dir;
+
+        entry.name = title.to_owned();
+        entry.metafile.metadata = metadata;
+        entry.metafile.write(&entry.output_dir).await
     }
 
     async fn fetch_library(library_dir: &Path) -> Result<HashMap<String, LibraryEntry>> {

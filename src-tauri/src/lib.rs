@@ -84,6 +84,7 @@ pub fn run() {
             commands::update_library_entry_settings,
             commands::get_dimensions,
             commands::mark_as_read,
+            commands::update_library_entry_title
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

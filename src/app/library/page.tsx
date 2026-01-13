@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { LibraryEntry } from "@/types/LibraryEntry";
 import { invoke } from "@tauri-apps/api/core";
-import { ArrowLeft, RotateCcw, Settings } from "lucide-react";
+import { ArrowLeft, Edit, RotateCcw, Settings } from "lucide-react";
 import { redirect } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 
@@ -21,6 +21,8 @@ export default function Library() {
   const [fileIndex, setFileIndex] = useState<number>();
   const [library, setLibrary] = useState<LibraryEntry[]>();
   const { setReaderContext } = useReader();
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [newName, setNewName] = useState("");
 
   const fetchLibrary = useCallback(async () => {
     const library = await invoke<LibraryEntry[]>("list_library");
@@ -49,6 +51,17 @@ export default function Library() {
     redirect("/reader");
   }, [fileIndex, selectedEntry, setReaderContext]);
 
+  const handleRename = async () => {
+    if (!selectedEntry) return;
+
+    await invoke("update_library_entry_title", {
+      id: selectedEntry.metafile.source.id,
+      title: newName,
+    });
+    await fetchLibrary();
+    setIsRenaming(false);
+  };
+
   return (
     <div className="flex flex-wrap gap-5">
       {selectedEntry ? (
@@ -57,18 +70,49 @@ export default function Library() {
             <div className="flex items-center gap-3">
               <Button
                 variant="outline"
-                onClick={() => setSelectedEntry(undefined)}
+                onClick={() => {
+                  setIsRenaming(false);
+                  setSelectedEntry(undefined);
+                }}
               >
                 <ArrowLeft />
                 Back
               </Button>
-              <h1>{selectedEntry.name}</h1>
+              {isRenaming ? (
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    handleRename();
+                  }}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    type="text"
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    className="p-2 border rounded"
+                    autoFocus
+                  />
+                  <Button type="submit">Save</Button>
+                </form>
+              ) : (
+                <h1>{selectedEntry.name}</h1>
+              )}
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger className="hover:bg-background hover:cursor-pointer p-1 rounded-full aspect-square transition-colors duration-200">
                 <Settings size={20} />
               </DropdownMenuTrigger>
               <DropdownMenuContent className="mx-2">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setIsRenaming(true);
+                    setNewName(selectedEntry.name);
+                  }}
+                >
+                  <Edit />
+                  <h1>Rename</h1>
+                </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={async () => {
                     await invoke("clear_reading_progress", {

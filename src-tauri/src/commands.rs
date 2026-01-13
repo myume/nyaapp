@@ -255,3 +255,17 @@ pub async fn clear_reading_progress(
         .await
         .map_err(|e| e.to_string())
 }
+
+#[tauri::command]
+pub async fn update_library_entry_title(
+    state: State<'_, Mutex<AppService>>,
+    id: String,
+    title: String,
+) -> Result<(), String> {
+    state
+        .lock()
+        .await
+        .update_library_entry_title(&id, &title)
+        .await
+        .map_err(|e| e.to_string())
+}
