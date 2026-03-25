@@ -141,7 +141,7 @@ impl AppService {
             let metadata_provider = self.get_metadata_provider_from_category(&media.category);
             let normalized_title = self.source.normalize_title(&media.title);
             let metadata = metadata_provider
-                .fetch_metdata(&normalized_title)
+                .fetch_metadata(&normalized_title)
                 .await
                 .map_err(|err| {
                     log::warn!(
@@ -186,7 +186,7 @@ impl AppService {
         let metadata_provider = self.get_metadata_provider_from_category(&info.category);
         let normalized_title = self.source.normalize_title(&info.title);
         metadata_provider
-            .fetch_metdata(&normalized_title)
+            .fetch_metadata(&normalized_title)
             .await
             .map_err(|err| {
                 log::warn!(
@@ -346,7 +346,7 @@ impl AppService {
         let info = self.source.get_info_by_id(id).await?;
         let metadata_provider = self.get_metadata_provider_from_category(&info.category);
         let metadata = metadata_provider
-            .fetch_metdata(title)
+            .fetch_metadata(title)
             .await
             .map_err(|err| {
                 log::warn!(

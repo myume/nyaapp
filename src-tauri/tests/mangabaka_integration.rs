@@ -30,6 +30,6 @@ async fn test_fetch_metadata() {
         .await
         .unwrap();
     let mangabaka = Mangabaka::new(pool);
-    let fetched = mangabaka.fetch_metdata("chainsaw man").await.unwrap();
+    let fetched = mangabaka.fetch_metadata("chainsaw man").await.unwrap();
     assert_eq!(fetched.id, 1677);
 }

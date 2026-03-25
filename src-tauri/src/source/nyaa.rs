@@ -25,7 +25,7 @@ pub struct Nyaa {
 mod category;
 pub mod query_params;
 
-impl super::FileSize {
+impl FileSize {
     fn from(s: &str, re: &Regex) -> Result<Self> {
         let caps = re.captures(s).context("Failed to parse size")?;
         let size = caps["size"].parse()?;

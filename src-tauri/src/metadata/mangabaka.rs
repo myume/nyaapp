@@ -143,7 +143,7 @@ impl Mangabaka {
 
 #[async_trait]
 impl MetadataProvider for Mangabaka {
-    async fn fetch_metdata(&self, title: &str) -> Result<Metadata> {
+    async fn fetch_metadata(&self, title: &str) -> Result<Metadata> {
         log::trace!("Fetching metadata for \"{}\" from mangabaka db", title);
 
         // have to do this to allow punctuation in the title.
