@@ -13,6 +13,7 @@ use crate::{
     metafile::{Metafile, ReadingProgress},
     reader::Reader,
     settings::ReaderSettings,
+    source::SourceMeta,
     utils::read_files_from_dir,
 };
 
@@ -119,9 +120,24 @@ impl Library {
                     .display()
             );
 
-            let Ok(metafile) = Metafile::read(&dir.path()).await else {
-                log::error!("Failed to read metadata for {}", dir.path().display());
-                continue;
+            let metafile = match Metafile::read(&dir.path()).await {
+                Ok(metafile) => metafile,
+                Err(e) => {
+                    log::warn!("Failed to read metadata for {}: {e}", dir.path().display());
+                    log::warn!("Creating placeholder metafile.");
+                    let metafile = Metafile::new(
+                        SourceMeta {
+                            id: "".into(),
+                            provider: crate::source::Sources::Nyaa,
+                        },
+                        None,
+                    );
+                    metafile
+                        .write(&dir.path())
+                        .await
+                        .context("Failed to write metafile")?;
+                    metafile
+                }
             };
 
             library.insert(

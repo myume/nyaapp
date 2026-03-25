@@ -343,17 +343,22 @@ impl AppService {
     }
 
     pub async fn update_library_entry_title(&mut self, id: &str, title: &str) -> Result<()> {
-        let info = self.source.get_info_by_id(id).await?;
-        let metadata_provider = self.get_metadata_provider_from_category(&info.category);
+        // TODO: figure out how to handle this properly.
+        // we create a placeholder metafile, but when we go to rename it, we need to somehow figure
+        // out the category. There is no easy way to do this.
+        let category = self
+            .source
+            .get_info_by_id(id)
+            .await
+            .map(|info| info.category)
+            .unwrap_or(Category::Manga); // default to manga for now
+
+        let metadata_provider = self.get_metadata_provider_from_category(&category);
         let metadata = metadata_provider
             .fetch_metadata(title)
             .await
             .map_err(|err| {
-                log::warn!(
-                    "No metdata found for \"{}\": {}",
-                    info.title,
-                    err.to_string()
-                );
+                log::warn!("No metdata found for \"{}\": {}", title, err.to_string());
                 err
             })
             .ok();
