@@ -101,7 +101,7 @@ impl AppService {
             self.get_metadata_by_id(id).await.ok(),
         );
 
-        log::info!("Writing metafile for {}", id);
+        log::debug!("Writing metafile for {}", id);
         metafile.write(&output_dir).await?;
 
         self.library
@@ -127,7 +127,7 @@ impl AppService {
     }
 
     pub async fn list_torrents(&self) -> Vec<TorrentStats> {
-        log::info!("Listing torrents");
+        log::debug!("Listing torrents");
         self.torrent_service.lock().await.list_torrents()
     }
 
@@ -163,7 +163,7 @@ impl AppService {
             });
         }
 
-        log::info!(
+        log::debug!(
             "Metadata hit rate: {}/{} = {:.2}%",
             metadata_hits,
             results.len(),
@@ -209,7 +209,7 @@ impl AppService {
     }
 
     pub async fn delete(&self, id: &str) -> Result<()> {
-        log::info!("Removing {} from torrent client", id);
+        log::debug!("Removing {} from torrent client", id);
         self.torrent_service.lock().await.remove_torrent(id).await?;
         log::info!("Removing {} from library", id);
         self.library.lock().await.delete(id).await
@@ -225,8 +225,6 @@ impl AppService {
             .context(format!("Failed to find entry with id {} in library", id))?;
 
         let filename = entry.files.get(file_num).context("File not found")?;
-
-        log::info!("Loading files from {}", filename);
 
         let num_pages = self
             .cbz_reader
@@ -250,7 +248,7 @@ impl AppService {
 
         let filename = entry.files.get(file_num).context("File not found")?;
 
-        log::info!("Fetching page {} from {}", page_num, filename);
+        log::trace!("Fetching page {} from {}", page_num, filename);
 
         let page = self
             .cbz_reader
@@ -259,8 +257,7 @@ impl AppService {
             .get(&entry.output_dir.join(filename), page_num);
 
         let page = if page.is_none() {
-            log::info!("Failed to find page {} from {}", page_num, filename);
-            log::info!("Loading files from {}", filename);
+            log::debug!("Page not in cache: Loading files from {}", filename);
             self.cbz_reader
                 .lock()
                 .await
@@ -302,7 +299,7 @@ impl AppService {
 
         let filename = entry.files.get(file_num).context("File not found")?;
 
-        log::info!("Fetching dimensions for {}", filename);
+        log::debug!("Fetching dimensions for {}", filename);
 
         self.cbz_reader
             .lock()

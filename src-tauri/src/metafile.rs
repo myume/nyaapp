@@ -39,8 +39,7 @@ impl Metafile {
 
         let mut file = File::create(&metafile_path).await?;
         file.write_all(to_vec(&self)?.as_slice()).await?;
-
-        log::info!("Successfully wrote metafile to {}", metafile_path.display());
+        log::trace!("Successfully wrote metafile to {}", metafile_path.display());
 
         Ok(())
     }

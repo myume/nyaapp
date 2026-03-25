@@ -239,7 +239,7 @@ impl Source for Nyaa {
 
         let config = NyaaParseConfig::new();
 
-        log::info!("Parsing Nyaa table rows");
+        log::debug!("Parsing Nyaa table rows");
 
         let media_info = rows
             .filter_map(|row| {

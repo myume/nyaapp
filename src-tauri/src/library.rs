@@ -109,7 +109,15 @@ impl Library {
         let mut children = read_dir(library_dir).await?;
 
         while let Ok(Some(dir)) = children.next_entry().await {
-            info!("Found: {}", dir.path().display());
+            info!(
+                "Found: {}",
+                dir.path()
+                    .components()
+                    .last()
+                    .context("Invalid path for library entry")?
+                    .as_os_str()
+                    .display()
+            );
 
             let Ok(metafile) = Metafile::read(&dir.path()).await else {
                 log::error!("Failed to read metadata for {}", dir.path().display());
@@ -167,7 +175,7 @@ impl Library {
                 .get(filename)
                 .map(|progress| progress.current_page)
         {
-            log::info!("Reading progress for: {} is up to date", filename,);
+            log::debug!("Reading progress for: {} is up to date", filename,);
             return Ok(());
         }
 
@@ -183,7 +191,7 @@ impl Library {
             );
         }
 
-        log::info!(
+        log::debug!(
             "Updating reading progress for: {} to page {}",
             filename,
             updated_page,

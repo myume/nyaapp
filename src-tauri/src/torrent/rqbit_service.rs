@@ -105,7 +105,7 @@ impl RqbitService {
     ) -> Result<PathBuf> {
         let output_path = base_dir.join(&filename);
 
-        log::info!(
+        log::debug!(
             "Downloading torrent file from {} to {}",
             file_url,
             output_path.display()
@@ -116,7 +116,7 @@ impl RqbitService {
                 log::error!("Failed to download torrent file from {}", &file_url);
                 err
             })?;
-        log::info!(
+        log::debug!(
             "Finished downloading torrent file from {} to {}",
             file_url,
             base_dir.display()

@@ -116,12 +116,12 @@ impl Mangabaka {
 
         download_file_from_url(client, &download_url, filename, output_dir).await?;
 
-        log::info!("Unpacking {} to {}", filename, output_dir.display());
+        log::debug!("Unpacking {} to {}", filename, output_dir.display());
 
         let tarball = output_dir.join(filename);
         unpack_tarball(&tarball)?;
 
-        log::info!("Cleaning up tarball");
+        log::debug!("Cleaning up tarball");
         remove_file(tarball).await?;
 
         Ok(())
@@ -144,7 +144,7 @@ impl Mangabaka {
 #[async_trait]
 impl MetadataProvider for Mangabaka {
     async fn fetch_metdata(&self, title: &str) -> Result<Metadata> {
-        log::info!("Fetching metadata for \"{}\" from mangabaka db", title);
+        log::trace!("Fetching metadata for \"{}\" from mangabaka db", title);
 
         // have to do this to allow punctuation in the title.
         // allowing punctuation in the title to make my life easier because then i don't need to
