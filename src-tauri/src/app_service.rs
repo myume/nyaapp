@@ -12,17 +12,17 @@ use crate::{
     metadata::{mangabaka::Mangabaka, Metadata, MetadataProvider},
     metafile::Metafile,
     reader::{cbz_reader::CBZReader, Reader},
-    source::{nyaa::Nyaa, Category, MediaInfo, PaginationInfo, Source, SourceMeta},
+    source::{nyaa::Nyaa, MediaInfo, PaginationInfo, Source, SourceMeta},
     torrent::{rqbit_service::RqbitService, TorrentService, TorrentStats},
 };
 
 pub struct AppService {
-    source: Box<dyn Source>,
+    source: Nyaa,
     base_dir: PathBuf,
     pub torrent_service: Arc<Mutex<dyn TorrentService>>,
-    pub mangabaka_provider: Arc<Mangabaka>,
-    library: Arc<Mutex<Library>>,
-    cbz_reader: Arc<Mutex<CBZReader>>,
+    pub metadata_provider: Mangabaka,
+    library: Library,
+    cbz_reader: CBZReader,
 }
 
 #[derive(Serialize)]
@@ -71,14 +71,12 @@ impl AppService {
         ));
 
         Ok(AppService {
-            source: Box::new(Nyaa::new(torrent_service.clone(), client.clone())),
-            mangabaka_provider: Arc::new(
-                Mangabaka::setup(&client, &app_data_dir.join("db")).await?,
-            ),
+            source: Nyaa::new(torrent_service.clone(), client.clone()),
+            metadata_provider: Mangabaka::setup(&client, &app_data_dir.join("db")).await?,
             base_dir: app_data_dir,
             torrent_service,
-            library: Arc::new(Mutex::new(library)),
-            cbz_reader: Arc::new(Mutex::new(CBZReader::new())),
+            library,
+            cbz_reader: CBZReader::new(),
         })
     }
 
@@ -90,7 +88,7 @@ impl AppService {
             .context("Receiver does not exist")
     }
 
-    pub async fn download(&self, id: &str) -> Result<()> {
+    pub async fn download(&mut self, id: &str) -> Result<()> {
         let library_dir = self.base_dir.join("library");
         let output_dir = self.source.download(id, &library_dir).await?;
         let metafile = Metafile::new(
@@ -104,26 +102,13 @@ impl AppService {
         log::debug!("Writing metafile for {}", id);
         metafile.write(&output_dir).await?;
 
-        self.library
-            .lock()
-            .await
-            .add_entry(metafile, output_dir)
-            .await?;
+        self.library.add_entry(metafile, output_dir).await?;
 
         Ok(())
     }
 
     pub async fn get_title_by_id(&self, id: &str) -> Result<String> {
         self.source.get_info_by_id(id).await.map(|info| info.title)
-    }
-
-    fn get_metadata_provider_from_category(
-        &self,
-        category: &Category,
-    ) -> Arc<dyn MetadataProvider> {
-        match category {
-            Category::Manga => self.mangabaka_provider.clone(),
-        }
     }
 
     pub async fn list_torrents(&self) -> Vec<TorrentStats> {
@@ -138,9 +123,9 @@ impl AppService {
         let mut metadata_hits = 0;
 
         for media in media_info {
-            let metadata_provider = self.get_metadata_provider_from_category(&media.category);
             let normalized_title = self.source.normalize_title(&media.title);
-            let metadata = metadata_provider
+            let metadata = self
+                .metadata_provider
                 .fetch_metadata(&normalized_title)
                 .await
                 .map_err(|err| {
@@ -183,9 +168,8 @@ impl AppService {
 
     async fn get_metadata_by_id(&self, id: &str) -> Result<Metadata> {
         let info = self.source.get_info_by_id(id).await?;
-        let metadata_provider = self.get_metadata_provider_from_category(&info.category);
         let normalized_title = self.source.normalize_title(&info.title);
-        metadata_provider
+        self.metadata_provider
             .fetch_metadata(&normalized_title)
             .await
             .map_err(|err| {
@@ -200,7 +184,7 @@ impl AppService {
 
     pub async fn fetch_library(&self) -> Vec<LibraryEntry> {
         log::info!("Fetching library");
-        self.library.lock().await.get_entries()
+        self.library.get_entries()
     }
 
     pub async fn remove_download(&self, id: &str) -> Result<()> {
@@ -208,40 +192,37 @@ impl AppService {
         self.torrent_service.lock().await.remove_torrent(id).await
     }
 
-    pub async fn delete(&self, id: &str) -> Result<()> {
+    pub async fn delete(&mut self, id: &str) -> Result<()> {
         log::debug!("Removing {} from torrent client", id);
         self.torrent_service.lock().await.remove_torrent(id).await?;
         log::info!("Removing {} from library", id);
-        self.library.lock().await.delete(id).await
+        self.library.delete(id).await
     }
 
-    pub async fn load_cbz(&self, id: &str, file_num: usize) -> Result<usize> {
+    pub async fn load_cbz(&mut self, id: &str, file_num: usize) -> Result<usize> {
         let entry = self
             .library
-            .lock()
-            .await
             .get_entry(id)
             .await
             .context(format!("Failed to find entry with id {} in library", id))?;
 
         let filename = entry.files.get(file_num).context("File not found")?;
 
-        let num_pages = self
-            .cbz_reader
-            .lock()
-            .await
-            .load(&entry.output_dir.join(filename))?;
+        let num_pages = self.cbz_reader.load(&entry.output_dir.join(filename))?;
 
         log::info!("Loaded {} pages from {}", num_pages, filename);
 
         Ok(num_pages)
     }
 
-    pub async fn get_page(&self, id: &str, file_num: usize, page_num: usize) -> Result<Vec<u8>> {
+    pub async fn get_page(
+        &mut self,
+        id: &str,
+        file_num: usize,
+        page_num: usize,
+    ) -> Result<Vec<u8>> {
         let entry = self
             .library
-            .lock()
-            .await
             .get_entry(id)
             .await
             .context(format!("Failed to find entry with id {} in library", id))?;
@@ -252,20 +233,13 @@ impl AppService {
 
         let page = self
             .cbz_reader
-            .lock()
-            .await
             .get(&entry.output_dir.join(filename), page_num);
 
         let page = if page.is_none() {
             log::debug!("Page not in cache: Loading files from {}", filename);
-            self.cbz_reader
-                .lock()
-                .await
-                .load(&entry.output_dir.join(filename))?;
+            self.cbz_reader.load(&entry.output_dir.join(filename))?;
 
             self.cbz_reader
-                .lock()
-                .await
                 .get(&entry.output_dir.join(filename), page_num)
         } else {
             page
@@ -280,19 +254,14 @@ impl AppService {
         file_num: usize,
         updated_page: usize,
     ) -> Result<()> {
-        let reader = self.cbz_reader.lock().await;
         self.library
-            .lock()
-            .await
-            .update_reading_progress(id, file_num, updated_page, &*reader)
+            .update_reading_progress(id, file_num, updated_page, &self.cbz_reader)
             .await
     }
 
-    pub async fn get_dimensions(&self, id: &str, file_num: usize) -> Result<Vec<(u32, u32)>> {
+    pub async fn get_dimensions(&mut self, id: &str, file_num: usize) -> Result<Vec<(u32, u32)>> {
         let entry = self
             .library
-            .lock()
-            .await
             .get_entry(id)
             .await
             .context(format!("Failed to find entry with id {} in library", id))?;
@@ -302,31 +271,24 @@ impl AppService {
         log::debug!("Fetching dimensions for {}", filename);
 
         self.cbz_reader
-            .lock()
-            .await
             .get_dimensions(&entry.output_dir.join(filename))
             .context(format!("Failed to get dimensions for {}", filename))
     }
 
     pub async fn update_library_entry_settings(
-        &self,
+        &mut self,
         id: &str,
         settings: LibraryEntrySettings,
     ) -> Result<()> {
         log::info!("Updating settings for library entry {}", id);
         self.library
-            .lock()
-            .await
             .update_library_entry_settings(id, settings)
             .await
     }
 
     pub async fn mark_as_read(&mut self, id: &str, file_num: usize) -> Result<()> {
-        let reader = self.cbz_reader.lock().await;
         self.library
-            .lock()
-            .await
-            .mark_as_read(id, file_num, &*reader)
+            .mark_as_read(id, file_num, &self.cbz_reader)
             .await
     }
 
@@ -335,26 +297,12 @@ impl AppService {
         id: &str,
         file_num: Option<usize>,
     ) -> Result<()> {
-        self.library
-            .lock()
-            .await
-            .clear_reading_progress(id, file_num)
-            .await
+        self.library.clear_reading_progress(id, file_num).await
     }
 
     pub async fn update_library_entry_title(&mut self, id: &str, title: &str) -> Result<()> {
-        // TODO: figure out how to handle this properly.
-        // we create a placeholder metafile, but when we go to rename it, we need to somehow figure
-        // out the category. There is no easy way to do this.
-        let category = self
-            .source
-            .get_info_by_id(id)
-            .await
-            .map(|info| info.category)
-            .unwrap_or(Category::Manga); // default to manga for now
-
-        let metadata_provider = self.get_metadata_provider_from_category(&category);
-        let metadata = metadata_provider
+        let metadata = self
+            .metadata_provider
             .fetch_metadata(title)
             .await
             .map_err(|err| {
@@ -363,8 +311,6 @@ impl AppService {
             })
             .ok();
         self.library
-            .lock()
-            .await
             .update_library_entry_title(id, title, metadata)
             .await
     }
